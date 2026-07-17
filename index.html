@@ -177,6 +177,10 @@ svg text{font-family:var(--mono)}
         <div class="seg2"><button id="dpOn">On</button><button id="dpOff">Off</button></div>
       </div>
       <div class="sub" style="margin:-4px 0 8px 102px">Press &amp; hold the day/date on any Log or Plan card to peek that day's elevation profile; release to close.</div>
+      <div class="setrow"><label>Staging days</label>
+        <div class="seg2"><button id="stgOn">On</button><button id="stgOff">Off</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Show Day 0 (arrival/staging at the trailhead) and the End+ walk-out day (e.g. descending from the summit, or the exit hike back to a road). Turn off if you only want walking days.</div>
       <div class="setrow"><label>Profile scale</label>
         <div class="seg2"><button id="scDay">Day-fit</button><button id="scTrail">Whole-trail</button></div>
       </div>
@@ -275,7 +279,7 @@ svg text{font-family:var(--mono)}
 
 <script>
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
-const APP_VERSION="1.1.6";
+const APP_VERSION="1.2.0";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
 const CANONICAL_PIN=""; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
@@ -283,6 +287,32 @@ function canonical(){
   if(typeof location!=="undefined"&&location.protocol==="https:") return location.origin+location.pathname.replace(/index\.html$/,"");
   return "";
 }
+// ============ TRAIL CONFIG (generic-engine schema) ============
+// This block is the ONLY trail-specific data the day-structure engine reads.
+// A future generic engine loads one of these per trail; everything else is shared code.
+const TRAIL={
+  id:"jmt",
+  name:"John Muir Trail",
+  units:"mi",                     // "mi" | "km"
+  // Day 0: arrival/staging at the start trailhead (0 miles). Shown per direction.
+  day0:{
+    enabled:true,
+    byDir:{ NOBO:{loc:"Happy Isles Trailhead — Yosemite Valley", resupply:"Yosemite Village (store, permits)"},
+            SOBO:{loc:"Horseshoe Meadow / Whitney Portal area", resupply:"Lone Pine (via Portal or Horseshoe)"} }
+  },
+  // End+1: walk-out day after the trail "ends" somewhere you must still exit from.
+  // Triggered when the trip's final position is a walk-out terminus (below).
+  exitDays:[
+    // if a leg ends at the Whitney summit and there's no further leg, you still must descend
+    {atMile:208.7, name:"Summit → exit", note:"No camping at the summit or on the switchbacks — descend to Trail Camp, Guitar Lake, or exit to Whitney Portal the same day."}
+  ],
+  // No-camp zones (mileA,mileB in trail miles): flagged if a day's camp would land inside.
+  noCamp:[ [206.5,210.9,"Whitney summit & upper switchbacks — no water, no legal camping; day-hike from Guitar Lake"] ],
+  // Key named points that deserve emphasis even without resupply (like MTR).
+  keyPoints:[ [204.4,"Guitar Lake — classic summit-eve camp & water"], [106.5,"Muir Trail Ranch"] ],
+  // Nearest resupply for the *start* (used on Day 0 / Day 1 staging).
+  startResupply:{ NOBO:"Yosemite Village", SOBO:"Lone Pine" }
+};
 const WPTS=[[0,"Happy Isles Trailhead (Yosemite Valley)","TR"],[3.5,"Little Yosemite Valley",""],[4.8,"Half Dome Junction",""],[12.8,"Sunrise / Long Meadow",""],[17.4,"Cathedral Pass","P"],[22.9,"Tuolumne Meadows","TR"],[35.4,"Donohue Pass","P"],[42.3,"Thousand Island Lake",""],[56.6,"Devils Postpile jct",""],[58.2,"Reds Meadow / Mammoth","TR"],[76.1,"Silver Pass","P"],[85.7,"VVR jct (Lake Edison — ferry uncertain)","R"],[94.4,"Selden Pass","P"],[104.1,"Muir Trail Ranch","R"],[127.3,"Muir Pass","P"],[138.4,"Golden Staircase",""],[147.9,"Mather Pass","P"],[159.0,"Pinchot Pass","P"],[167.0,"Rae Lakes",""],[171.2,"Glen Pass","P"],[176.0,"Kearsarge Pass jct (Independence)","TR"],[187.6,"Forester Pass","P"],[200.5,"Crabtree Meadow / ranger",""],[204.4,"Guitar Lake",""],[208.7,"Mt. Whitney summit","M"],[210.4,"Trail Crest",""],[219.2,"Whitney Portal","TR"],[219.3,"JMT/PCT split (Cottonwood corridor)",""],[233.1,"Chicken Spring Lake",""],[234.0,"Cottonwood Pass","P"],[237.9,"Horseshoe Meadow Trailhead","TR"]];
 const TRAILHEADS=WPTS.filter(w=>w[2].includes("T"));
 const SEGS=[[0,"Happy Isles / Nevada Fall climb","Huge granite staircase out of the Valley; crowds thin above Nevada Fall"],[3.5,"Little Yosemite Valley","First legal camp; bear boxes"],[4.8,"Half Dome jct / Sunrise Creek","Half Dome cables need their own permit"],[12.2,"Sunrise / Long Meadow",""],[16.3,"Cathedral Pass / Cathedral Lakes","Cathedral Peak views; busy day-hike zone"],[22.9,"Tuolumne Meadows","Seasonal store & grill — last easy resupply until Reds"],[24.8,"Lyell Canyon","Flat and lovely; July mosquitoes are serious"],[31.9,"Donohue climb","Leave Yosemite at the pass"],[36.4,"Rush Creek / Island Pass",""],[40.5,"Thousand Island / Garnet","Banner and Ritter postcard country"],[46.1,"Shadow Lake / Rosalie",""],[53.8,"Devils Postpile approach","Columnar basalt worth the short spur"],[58.2,"Reds Meadow","Store, café, Mammoth shuttle"],[62.1,"Crater Meadow / Deer Creek",""],[68.8,"Purple Lake / Lake Virginia",""],[73.7,"Tully Hole / Silver Pass climb",""],[77.5,"Mono Creek / VVR country","VVR resupply: ferry service is not guaranteed (low water / operator gaps in recent years) — confirm before relying on it, or hike the ~5 mi Mono Creek trail in/out"],[87.2,"Bear Ridge / Bear Creek","Fords early season"],[92.0,"Sallie Keyes / Selden Pass",""],[100.7,"Senger Creek descent",""],[104.1,"Muir Trail Ranch / San Joaquin","Last bucket resupply on the route"],[107.5,"Evolution Valley","Evolution Creek ford — serious in early season"],[114.3,"Evolution Basin","Arguably the finest miles of the JMT"],[123.0,"Muir Pass approach","Long rocky basin; Muir Hut on top"],[128.9,"LeConte Canyon","Big descent past the Monster Rock"],[137.3,"Golden Staircase / Palisade Lakes","Steepest sustained climb on the JMT"],[144.8,"Upper Basin / Mather Pass",""],[151.1,"South Fork Kings / Lake Marjorie",""],[156.4,"Pinchot Pass",""],[161.7,"Woods Creek suspension bridge","One at a time on the bouncy bridge"],[165.9,"Rae Lakes","Painted Lady; strict one-night camping limits"],[170.1,"Glen Pass","Snow lingers on the north side"],[174.4,"Charlotte Lake / Kearsarge jct","Exit over Kearsarge Pass to Onion Valley / Independence"],[179.7,"Vidette Meadow / Bubbs Creek",""],[185.0,"Forester approach",""],[187.6,"Forester Pass","13,120 ft — highest pass on the route"],[191.5,"Bighorn Plateau / Tyndall Creek",""],[198.2,"Wallace / Crabtree","Ranger station; wag bags issued here"],[204.4,"Guitar Lake","Classic summit-eve camp"],[206.3,"Whitney switchbacks","Trail Crest — most drop packs for the summit spur"],[208.7,"Mt. Whitney summit","14,505 ft — top of the lower 48"],[210.4,"Trail Crest / 99 switchbacks","Long, hot descent"],[214.4,"Trail Camp / Outpost Camp",""],[219.2,"Whitney Portal","Burgers at the Portal Store; exit"],[219.3,"Cottonwood corridor / Sandy Meadow","Alternate exit: PCT south from the JMT split"],[226,"Guyot Flat / Siberian Outpost","Dry, sandy plateau country"],[232,"Chicken Spring Lake","Last reliable water before the pass"],[234.0,"Cottonwood Pass descent","Switchbacks down to Horseshoe Meadow"]];
@@ -334,6 +364,8 @@ if(!Array.isArray(st.customQuests)) st.customQuests=[];
 if(st.settings.backupDays===undefined) st.settings.backupDays="1";
 if(st.settings.dayPeek===undefined) st.settings.dayPeek="on";
 if(st.settings.profScale===undefined) st.settings.profScale="day";
+if(st.settings.day0===undefined) st.settings.day0=true;
+if(st.settings.exitDay===undefined) st.settings.exitDay=true;
 if(!st.actuals) st.actuals={}; if(!st.planned) st.planned={};
 for(const k in st.actuals){ if(typeof st.actuals[k]==="string") st.actuals[k]={v:st.actuals[k],m:"mi"}; }
 }
@@ -353,6 +385,7 @@ function wname(mi){const w=WPTS.find(x=>Math.abs(x[0]-mi)<0.05); return w?w[1]:"
 
 // ---------------- elevation ----------------
 const ELE={step:0.5,total:237.9,lo:[4027,4264,4487,4832,5205,5565,5833,5946,6111,6123,6169,6481,6811,7048,7250,7479,7678,7871,8067,8186,8431,8509,8871,9375,9568,9370,9307,9310,9318,9389,9549,9836,9783,9701,9604,9445,9434,9460,9138,9106,8945,8575,8633,8595,8651,8660,8626,8641,8674,8718,8731,8795,8813,8829,8828,8838,8848,8861,8880,8907,8908,8951,8965,8968,9222,9654,9747,10141,10455,10570,10828,10793,10497,10386,10240,10123,9951,9707,9628,9686,10015,10184,10160,10045,9839,9838,9923,9988,9698,9690,9798,9954,9649,9335,9078,8885,8788,8778,9075,9361,9382,9593,9452,9314,9217,8968,8697,8417,8159,8118,7968,7708,7676,7693,7522,7440,7553,7757,7917,8105,8298,8461,8643,8806,8936,9100,9164,9090,9094,9255,9442,9706,9917,10054,10106,10135,10105,9918,9922,10292,10409,10238,9958,9885,10132,10448,10326,10324,10360,10000,9616,9490,9260,9157,9372,9648,9903,10149,10395,10534,10723,10446,10359,10148,9838,9621,9462,8960,8813,8595,8291,8006,7911,7814,7833,8237,8605,9028,9434,9714,9907,9868,9600,9324,9066,8966,8938,9006,9095,9167,9263,9343,9490,9543,9764,9974,10099,10309,10495,10562,10664,10544,10284,10173,10140,9987,10035,9858,9669,9314,8916,8606,8314,8177,7985,7888,7879,7863,7908,7984,8030,8122,8161,8225,8319,8371,8430,8441,8788,9084,9202,9216,9332,9477,9527,9630,9682,9730,9806,9913,10159,10546,10795,10866,10863,10865,10968,11019,11210,11319,11410,11461,11492,11546,11787,11676,11611,11316,11106,10884,10709,10460,10200,9836,9495,9316,9225,9063,8847,8788,8662,8532,8379,8291,8249,8218,8088,8005,8237,8384,8429,8532,8606,8719,8853,8906,9088,9484,9796,10120,10412,10588,10710,10811,10827,10971,11203,11529,11855,11772,11595,11474,11319,11106,10960,10720,10578,10408,10262,10038,10036,10410,10672,10895,11034,11137,11276,11584,11930,11618,11442,11340,11078,10895,10645,10392,10044,9694,9545,9240,9045,8919,8641,8500,8581,8812,9028,9233,9440,9605,9879,10192,10286,10450,10538,10568,10535,10542,10774,11149,11488,11608,11225,10985,10764,10709,10408,10026,9572,9515,9543,9889,10015,10172,10329,10445,10572,10800,11010,11285,11493,11829,12101,12359,12747,12896,12519,12351,12212,11959,11836,11591,11404,11195,10980,10879,11046,11108,11313,11153,10935,10792,10660,10392,10398,10672,10854,10786,10655,10632,10777,10675,10670,10730,10863,11087,11244,11500,11530,11792,12139,12544,12928,13298,13671,13771,14070,14329,14030,13700,13602,13466,13135,12800,12468,12120,11893,11462,11066,10682,10372,10281,10039,9769,9469,9091,8786,8514,8346,10333,10301,10547,10543,10551,10617,10687,10486,10358,9936,9540,9574,9732,9964,10378,10532,10827,10946,10948,10939,10972,11100,11261,11337,11329,11312,11388,11260,11135,10930,10656,10368,10132,9967,9957,9906,9922,9936],hi:[4184,4475,4770,5129,5493,5775,5991,6073,6186,6142,6433,6733,7016,7181,7432,7644,7852,8028,8170,8353,8490,8765,9265,9722,9678,9588,9342,9331,9369,9517,9798,9935,9946,9754,9639,9570,9563,9571,9373,9154,9142,8853,8733,8651,8685,8701,8646,8675,8707,8730,8779,8815,8827,8842,8845,8843,8862,8897,8908,8913,8963,8969,8974,9142,9578,9709,10078,10347,10533,10781,11057,11043,10731,10482,10360,10195,10092,9898,9666,9932,10142,10223,10198,10143,10011,9912,10024,10143,9917,9769,10047,10098,9909,9584,9271,9020,8843,8992,9335,9450,9611,9696,9602,9440,9297,9187,8914,8635,8374,8142,8106,7901,7726,7732,7706,7514,7720,7913,8056,8253,8433,8618,8769,8925,9080,9187,9190,9177,9252,9389,9645,9880,10043,10101,10143,10177,10174,10078,10183,10410,10447,10401,10177,10061,10390,10512,10506,10393,10426,10324,9920,9556,9441,9293,9617,9834,10094,10334,10538,10785,10878,10665,10446,10336,10131,9776,9611,9354,8890,8753,8511,8262,7958,7918,8142,8522,8945,9363,9648,9899,9933,9928,9841,9524,9244,9024,8974,9082,9153,9244,9326,9473,9540,9715,9968,10033,10250,10446,10566,10738,10876,10606,10519,10215,10169,10125,10105,10061,9801,9621,9237,8839,8554,8295,8136,7956,7906,7954,7975,8052,8125,8158,8211,8286,8376,8415,8459,8722,9022,9196,9227,9292,9441,9511,9644,9665,9742,9808,9906,10065,10477,10738,10880,10945,10913,10949,10992,11134,11303,11380,11475,11472,11552,11715,11963,11823,11634,11594,11287,11047,10829,10671,10407,10129,9820,9434,9292,9230,9020,8844,8782,8640,8484,8332,8294,8230,8202,8199,8358,8414,8533,8591,8693,8810,8905,9024,9412,9729,10055,10351,10572,10688,10758,10850,10931,11184,11458,11780,12079,12030,11762,11569,11471,11270,11071,10918,10681,10553,10380,10208,10318,10589,10842,11031,11134,11282,11538,11857,12107,11886,11573,11453,11301,11039,10903,10565,10334,9958,9674,9519,9202,9036,8842,8572,8796,8972,9188,9410,9554,9835,10157,10292,10376,10553,10567,10596,10595,10704,11082,11418,11922,11968,11524,11152,10977,10762,10733,10321,9937,9533,9811,9983,10154,10314,10407,10537,10743,10960,11274,11437,11752,12030,12288,12664,12983,13139,12828,12499,12309,12156,11927,11812,11560,11354,11152,11002,11123,11307,11415,11376,11127,10897,10770,10645,10630,10812,10920,10965,10753,10758,10860,10746,10745,10849,11058,11146,11464,11566,11670,12068,12452,12844,13215,13598,13752,14023,14324,14467,14258,13968,13752,13629,13443,13068,12716,12412,12040,11834,11409,11002,10623,10384,10218,10010,9714,9399,9028,8731,10701,10515,10587,10684,10612,10588,10660,10911,10702,10465,10334,9774,9712,9945,10285,10478,10766,10923,10985,10986,10971,11090,11219,11427,11393,11387,11382,11502,11498,11237,11148,10875,10588,10322,10083,9978,9946,9936,9936],lf:[1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,1,1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,0,1,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,0,0,1,0,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1],g:[237,266,344,374,360,268,158,193,77,45,312,330,238,202,230,199,193,196,119,245,78,363,504,347,20,0,9,26,71,160,288,110,0,0,15,0,128,10,15,36,0,58,100,75,52,7,22,34,45,19,64,20,18,14,17,18,14,38,34,1,62,14,9,254,464,110,394,314,157,258,229,0,0,0,0,0,0,0,57,329,169,39,1,0,0,127,163,58,0,109,300,0,0,0,0,0,18,297,319,77,229,102,0,0,5,0,0,0,0,17,7,0,67,38,0,113,204,160,187,193,163,190,163,130,164,91,13,4,179,187,264,211,138,52,38,42,0,6,370,119,38,0,0,247,316,88,0,74,27,0,0,0,0,215,276,256,246,245,162,288,56,0,13,0,0,0,0,0,0,0,0,0,6,19,405,368,423,406,279,194,25,3,0,14,0,12,68,89,72,96,80,147,53,221,209,125,210,186,73,250,64,0,0,0,6,48,70,0,0,0,0,0,0,0,0,0,27,91,76,70,120,48,64,95,85,64,36,347,296,125,24,116,145,51,117,74,60,78,107,249,387,250,93,79,30,102,64,191,113,90,65,41,64,241,176,13,23,0,0,0,0,0,0,0,0,0,5,0,0,1,0,0,0,8,1,13,0,232,147,52,104,74,112,141,90,182,396,311,324,292,176,122,106,57,144,232,326,326,224,0,0,0,0,0,0,0,0,0,0,0,374,262,222,139,103,150,308,345,178,0,10,0,0,8,0,0,0,0,0,0,18,0,0,81,231,216,204,219,195,274,313,100,166,103,33,42,10,232,375,339,480,0,1,41,0,24,0,0,0,28,346,131,157,157,118,127,228,210,275,207,336,272,258,388,320,71,0,0,0,0,0,0,0,0,0,166,77,206,102,0,6,3,0,6,274,183,120,5,0,204,24,4,75,133,232,158,286,65,263,347,405,383,370,373,155,299,325,71,0,53,0,163,0,0,0,0,0,0,0,0,11,6,0,0,0,0,0,0,9,24,332,59,70,66,70,224,0,3,0,33,158,232,414,167,295,121,44,12,33,127,162,165,33,36,76,114,13,12,29,0,0,0,0,19,17,14]};
+const EF={step:0.1,d:[4027,13,23,51,68,60,68,71,50,34,30,63,69,68,70,73,68,68,72,78,87,83,76,65,63,63,63,59,49,51,50,57,52,30,0,-13,-3,20,41,56,60,20,-9,-22,3,7,1,-6,-2,16,42,75,76,60,43,43,57,62,70,68,69,70,62,47,35,37,34,44,25,44,37,55,47,46,44,44,37,36,41,45,55,53,53,34,22,17,27,37,48,44,35,23,17,27,30,23,21,32,55,66,54,37,16,15,15,19,38,59,77,89,98,109,106,95,94,101,111,99,77,27,-10,-45,-36,-19,0,-5,-35,-60,-61,-46,-29,-21,-9,-2,1,-2,-2,7,1,3,-4,4,8,16,22,29,32,34,30,27,39,42,58,64,65,36,21,16,33,29,9,-33,-44,-43,-27,-30,-24,-16,-8,-24,-30,-29,-4,-4,-14,-41,-43,-38,-20,-14,2,21,41,33,18,5,-2,-11,-37,-62,-78,-86,-78,-51,-16,4,-2,-16,-10,3,10,-8,-37,-63,-82,-93,-100,-85,-59,-4,32,53,28,-4,-30,-28,-10,0,-12,0,12,30,8,-1,3,9,5,-5,-14,-17,-17,-11,-1,5,4,2,5,8,8,7,5,4,6,9,10,13,8,3,-1,0,4,8,9,13,15,15,10,6,4,2,1,1,1,3,4,5,4,5,1,-2,-4,0,4,4,1,0,-1,0,-1,4,2,3,3,5,4,4,6,12,3,-1,-4,4,6,8,8,4,1,-1,-2,-1,0,3,8,18,18,8,-3,-6,-2,5,6,5,3,0,-1,1,13,40,56,70,65,79,91,98,102,71,31,-11,2,25,53,52,74,89,91,63,41,32,63,85,90,62,20,-4,12,33,62,50,55,50,48,57,67,65,30,-19,-43,-59,-59,-66,-69,-69,-73,-55,-34,-14,-23,-27,-28,-22,-18,-21,-21,-37,-42,-45,-27,-13,-12,-23,-36,-30,-30,-33,-45,-43,-45,-48,-56,-49,-36,-26,-6,2,19,38,58,61,56,64,66,60,42,24,24,21,23,13,2,-4,-16,-12,-8,-6,-10,-10,-19,-17,-32,-30,-45,-47,-56,-41,-21,18,24,19,1,12,14,7,3,29,55,62,31,-10,-52,-66,-67,-64,-63,-52,-34,-13,-3,5,26,36,51,57,64,62,53,18,-22,-45,-30,-24,-39,-56,-54,-65,-68,-78,-63,-64,-60,-63,-66,-64,-57,-38,-40,-32,-42,-33,-40,-37,-26,-32,-13,-16,-1,-9,12,48,71,82,74,75,62,61,60,62,23,-7,-30,-7,24,49,59,55,30,11,14,34,16,-17,-48,-53,-45,-33,-14,-25,-35,-41,-28,-16,-10,-14,-7,-23,-28,-50,-54,-58,-53,-48,-52,-52,-52,-53,-58,-58,-54,-54,-56,-53,-51,-51,-52,-54,-47,-31,-6,5,-2,-14,-11,-12,-26,-46,-61,-56,-57,-50,-48,-40,-25,-10,16,13,19,-4,-7,-1,5,5,-23,-46,-54,-47,-35,-33,-27,-10,23,37,39,35,38,48,47,43,39,43,38,27,25,29,33,32,35,42,43,36,37,38,31,32,33,42,37,37,38,44,37,34,17,12,19,42,51,47,38,34,25,18,14,27,37,44,31,28,18,22,18,18,5,-4,-9,-4,1,-3,-19,-25,-21,-5,11,33,44,38,28,10,7,22,45,56,51,49,49,52,56,57,57,49,40,33,28,26,23,35,33,27,15,12,12,6,6,8,7,11,7,4,-3,6,12,13,-1,-16,-20,-17,-19,-12,-22,-30,-54,-38,-7,31,58,72,94,82,63,31,24,11,13,13,8,4,-16,-25,-31,-38,-40,-55,-60,-57,-56,-50,-53,-42,-4,31,59,62,66,67,67,64,62,48,22,12,12,17,-14,-40,-51,-39,-23,-6,12,17,20,12,8,11,0,-14,-33,-53,-67,-82,-80,-80,-81,-82,-79,-72,-67,-52,-40,-21,-12,-19,-36,-43,-44,-42,-59,-49,-34,13,44,72,74,64,58,58,54,40,28,34,55,68,67,61,47,48,44,52,60,48,44,41,57,59,48,17,7,19,48,68,63,54,45,30,-12,-49,-71,-69,-69,-60,-44,-28,-12,-8,-12,-29,-29,-39,-45,-55,-44,-31,-42,-62,-81,-69,-63,-58,-57,-44,-30,-19,-11,-17,-26,-49,-72,-104,-109,-100,-87,-82,-60,-30,-8,-21,-39,-59,-49,-35,-30,-52,-68,-74,-64,-51,-37,-46,-55,-66,-58,-57,-42,-27,-14,-9,-2,-9,-22,-27,-26,-4,24,54,71,78,88,82,58,57,77,97,96,79,86,81,90,84,86,81,83,77,72,59,56,54,57,54,54,47,45,33,24,10,8,2,0,-6,-12,-10,-16,-18,-30,-36,-53,-70,-78,-76,-44,-40,-44,-74,-77,-57,-39,-36,-43,-41,-31,-13,-12,-4,-11,-9,-6,7,23,32,25,17,14,15,19,12,15,13,16,20,20,22,15,16,16,20,16,15,14,17,24,36,37,30,19,15,11,11,9,18,29,42,46,45,54,57,59,45,30,11,5,8,19,39,61,55,42,23,38,34,37,32,39,45,49,38,21,5,1,7,21,31,52,62,73,13,-33,-71,-57,-45,-34,-20,-12,-14,-34,-50,-59,-53,-60,-50,-34,-12,-7,-4,-4,-6,-3,-9,-10,-19,-32,-43,-38,-3,24,40,13,0,-15,-20,-32,-48,-52,-57,-56,-39,-26,-27,-40,-58,-69,-77,-78,-75,-79,-81,-80,-80,-78,-77,-65,-59,-52,-56,-51,-63,-71,-65,-41,-23,-25,-30,-31,-34,-40,-45,-38,-34,-29,-28,-20,-15,-16,-16,-4,4,9,-3,-12,1,19,30,12,-13,-15,-9,15,22,23,12,9,23,19,16,-7,1,11,32,33,24,-1,-4,-5,13,9,11,14,15,17,13,9,15,15,26,27,30,8,4,-2,12,8,14,11,15,15,13,9,-1,-3,4,32,62,85,78,75,63,56,57,57,52,50,37,28,11,2,11,7,6,-2,-4,9,15,25,29,30,37,34,29,25,16,13,12,9,15,20,29,34,24,10,5,7,11,2,7,7,25,14,20,2,9,17,22,18,5,6,15,19,29,20,25,8,21,43,76,95,93,86,72,67,60,61,42,48,45,59,47,24,3,-4,9,20,26,15,-2,-18,-23,-16,-1,7,6,-8,8,23,34,20,14,4,5,9,19,27,33,33,46,44,42,23,18,21,14,6,5,19,30,25,23,18,21,4,2,-4,0,0,10,23,28,16,4,-2,9,19,31,48,63,72,65,58,16,-28,-72,-73,-42,-24,-22,-28,-21,5,7,-8,-45,-70,-72,-60,-45,-38,-36,-39,-53,-53,-57,-45,-41,-39,-47,-33,-23,-22,-38,-49,-46,-35,-46,-55,-66,-65,-51,-41,-45,-60,-79,-79,-80,-70,-47,-60,-73,-91,-72,-61,-51,-45,-33,-26,-23,-21,-26,-22,-15,-3,0,-16,-40,-54,-52,-45,-52,-52,-43,-22,-8,-2,-13,-17,-19,-25,-32,-38,-23,-17,-13,-16,-26,-33,-43,-33,-28,-24,-28,-40,-27,-27,-12,-13,-1,-5,-6,-11,-9,-19,-14,-10,3,4,-5,-19,-35,-26,-29,-40,-24,8,50,50,41,34,42,36,33,20,21,14,10,2,10,5,18,27,34,22,13,10,15,15,14,17,24,24,21,18,34,27,21,10,27,36,32,11,-7,0,13,29,26,33,44,63,76,80,79,78,65,61,58,68,68,70,58,63,62,72,75,67,62,47,53,39,45,38,48,34,24,7,10,31,39,33,20,16,12,21,28,28,7,3,7,8,-7,10,25,48,49,54,60,49,36,29,41,66,74,74,65,65,57,61,67,68,62,63,59,22,-32,-60,-68,-60,-45,-38,-30,-44,-39,-38,-32,-28,-19,-20,-14,-27,-26,-35,-37,-42,-49,-49,-45,-38,-33,-32,-31,-27,-26,-32,-42,-47,-51,-47,-46,-38,-31,-28,-25,-25,-26,-35,-38,-37,-31,-22,-23,-29,-37,-44,-45,-51,-46,-40,-24,6,39,67,76,85,75,61,45,43,57,69,62,47,30,40,51,50,37,21,14,18,18,23,25,18,18,7,31,40,41,18,31,68,85,71,51,43,62,75,87,79,84,31,-14,-74,-62,-70,-66,-73,-62,-64,-52,-41,-17,-4,-1,-8,-29,-35,-39,-44,-55,-56,-53,-45,-35,-27,-38,-44,-31,-25,-53,-79,-68,-58,-45,-47,-39,-46,-57,-62,-56,-63,-72,-89,-84,-75,-64,-66,-48,-42,-26,-36,-33,-32,-47,-70,-80,-62,-45,-47,-30,-36,-30,-38,-29,-26,-28,-29,-41,-56,-59,-55,-48,-57,-53,-47,-12,11,27,28,45,52,59,42,52,42,41,26,36,44,41,39,40,45,45,44,43,43,44,27,28,34,29,36,39,65,61,55,53,47,56,66,76,63,43,20,17,28,24,21,4,13,24,48,55,44,30,21,15,-1,1,3,10,4,3,6,0,8,3,5,-17,-17,-16,0,2,13,30,51,66,76,73,83,74,75,82,81,73,50,55,88,111,115,97,72,19,-42,-93,-94,-91,-91,-96,-100,-63,-56,-35,-59,-56,-32,-23,-27,-67,-68,-46,-22,-11,-12,-18,-3,2,-25,-57,-83,-75,-79,-80,-75,-76,-74,-82,-84,-95,-84,-89,-69,-54,-19,-4,1,10,22,52,73,75,68,51,34,21,22,35,38,37,42,29,26,19,28,32,39,30,29,24,18,17,20,30,34,23,21,21,34,38,38,42,49,57,51,40,36,38,52,58,64,66,49,40,25,34,40,48,57,67,69,63,63,54,53,47,57,63,66,62,48,40,48,63,80,78,78,72,73,64,50,58,70,80,19,-26,-80,-71,-82,-78,-81,-75,-55,-30,-21,-36,-48,-49,-36,-30,-15,-23,-36,-56,-59,-58,-45,-35,-23,-20,-28,-27,-29,-20,-43,-51,-63,-50,-47,-37,-41,-37,-42,-40,-39,-38,-42,-44,-42,-40,-41,-44,-49,-44,-34,1,35,56,38,25,21,25,11,12,24,62,53,40,19,27,34,16,-5,-30,-41,-54,-56,-50,-57,-56,-45,-37,-30,-32,-17,-27,-35,-37,-28,-36,-33,-23,-12,-29,-46,-64,-66,-41,-2,35,55,61,58,60,49,35,24,26,36,23,6,11,27,30,1,-36,-60,-57,-43,-36,-27,-21,-15,-12,1,14,39,60,59,34,-13,-25,-38,-27,-33,-22,-13,-2,-3,10,15,25,8,4,-2,25,40,42,34,36,41,49,46,34,10,-3,20,53,69,62,57,56,66,45,34,-6,-17,-13,22,34,33,32,62,86,86,64,61,71,79,82,81,76,77,74,77,72,80,82,83,79,80,69,72,72,82,78,71,70,66,44,27,-10,13,31,69,64,60,55,53,52,61,67,72,71,47,2,-45,-69,-73,-67,-62,-51,-53,-55,-60,-62,-70,-33,-12,11,-25,-48,-65,-71,-14,32,22,-39,-90,-87,-83,-74,-69,-63,-67,-69,-68,-73,-75,-73,-63,-56,-55,-58,-59,-68,-79,-84,-64,-47,-44,-40,-48,-57,-82,-97,-92,-80,-62,-57,-78,-96,-97,-87,-73,-81,-78,-74,-66,-65,-65,-63,-34,-25,-8,-9,-24,-44,-65,-59,-57,-41,-31,-38,-49,-60,-54,-60,-60,-57,-60,-61,-66,-71,-68,-80,-77,-79,-62,-62,-65,-62,-57,-52,-57,-59,-55,-51,-50,-56,-36,766,751,720,-86,-73,-60,-29,-27,13,41,96,68,49,32,35,-10,-45,-47,-2,22,15,-6,-16,-13,-5,2,13,21,19,19,14,10,14,29,59,74,26,-45,-98,-97,-69,-43,-23,-24,-32,-35,-20,-19,-29,-57,-87,-112,-139,-124,-105,-78,-48,-15,19,30,26,38,28,39,31,37,58,54,59,50,80,88,94,71,39,11,21,43,50,51,62,68,65,51,49,28,18,11,23,18,10,1,0,-1,0,3,-9,-16,-10,4,8,7,5,9,16,23,33,27,25,12,20,33,45,47,44,31,42,9,10,-12,-9,-16,-14,13,9,1,-19,-18,-1,10,19,11,9,12,21,28,32,14,9,-29,-49,-80,-63,-33,-19,-12,-34,-28,-14,-24,-41,-73,-62,-60,-58,-58,-53,-56,-52,-57,-52,-59,-55,-55,-47,-48,-46,-47,-42,-34,-31,-28,-23,-11,4,3,-1,-10,-8,-6,-7,-13,-6,2,8,4,1,3]};
 const CAL=[[0,0],[237.9,237.9]];
 function nom2trk(m){
   if(m<=CAL[0][0]) return CAL[0][1]+(m-CAL[0][0]);
@@ -380,6 +413,10 @@ function eleAtTrk(d){ // representative (mid) elevation for dot/label placement 
 function eleAtMile(m){return eleAtTrk(nom2trk(m));}
 function elePeakAtMile(m){const i=eleCell(nom2trk(m)); return ELE.hi[i];} // true high in the cell — for pass/summit labels
 function eleLowAtMile(m){const i=eleCell(nom2trk(m)); return ELE.lo[i];}
+// fine 0.1mi elevation (for smooth drawing only; text uses min/max peaks)
+const EFA=(()=>{const a=[];let c=0;for(const dv of EF.d){c+=dv;a.push(c);}return a;})();
+function eleFineAtTrk(t){ t=Math.max(0,Math.min(t,(EFA.length-1)*EF.step)); const x=t/EF.step, i=Math.min(EFA.length-2,Math.floor(x)); return EFA[i]+(EFA[i+1]-EFA[i])*(x-i); }
+function eleFineAtMile(m){ return eleFineAtTrk(nom2trk(m)); }
 function gainLoss(mileA,mileB){
   const lo=nom2trk(Math.min(mileA,mileB)), hi=nom2trk(Math.max(mileA,mileB));
   const a=lo/ELE.step, b=hi/ELE.step;
@@ -699,8 +736,26 @@ function compute(){
     sn.away=sn.etaCum===null?null:Math.max(0,sn.etaCum-cur.cum);
   }
   const next=stones.find(s=>!s.reached&&s.away!==null&&s.away>1e-6);
+  // --- Day 0 (staging) + End+1 (walk-out) metadata from TRAIL config ---
+  let day0=null, exitDay=null;
+  if(TRAIL&&TRAIL.day0&&TRAIL.day0.enabled&&st.day0!==false){
+    const dc=TRAIL.day0.byDir[st.dir]||TRAIL.day0.byDir.NOBO;
+    day0={loc:dc.loc,resupply:dc.resupply,date:dateForDay(0)};
+  }
+  if(TRAIL&&TRAIL.exitDays&&st.exitDay!==false&&legs.length){
+    const endPos=legs[legs.length-1].to;
+    const ex=TRAIL.exitDays.find(e=>Math.abs(e.atMile-endPos)<0.6);
+    if(ex){ const lastDay=rows.length; exitDay={name:ex.name,note:ex.note,date:dateForDay(lastDay+1),dayNum:lastDay+1}; }
+  }
+  // no-camp + key-point annotations per row (camp = row end position)
+  for(const r of rows){
+    r.campWarn=null; r.keyPt=null;
+    const cp=r.proj.pos;
+    if(TRAIL&&TRAIL.noCamp) for(const z of TRAIL.noCamp){ if(cp>=Math.min(z[0],z[1])-1e-6&&cp<=Math.max(z[0],z[1])+1e-6){ r.campWarn=z[2]; break; } }
+    if(TRAIL&&TRAIL.keyPoints) for(const k of TRAIL.keyPoints){ const lo=Math.min(r.proj.pos0,r.proj.pos),hi=Math.max(r.proj.pos0,r.proj.pos); if(k[0]>lo+1e-6&&k[0]<=hi+1e-6){ r.keyPt=k[1]; break; } }
+  }
   return {st,legs,issues,quests,totalTrail,totalPlanned,rows,cur,lastEntered,
-    ledger,red,envMin:rawMin,envMax:rawMax,uniqueDone,totalWalked:cur.cum,stones,next,finishETA,pace};
+    ledger,red,day0,exitDay,envMin:rawMin,envMax:rawMax,uniqueDone,totalWalked:cur.cum,stones,next,finishETA,pace};
 }
 
 // ---------------- per-day derivations for a view ----------------
@@ -825,6 +880,12 @@ function travelCard(r,vd,tDay){
 function renderLog(m){
   const tDay=tDayOf();
   let html="",doneShown=false;
+  if(m.day0){
+    html+='<div class="card" style="border-style:dashed;border-color:var(--trail)"><div class="rowtop">'
+      +'<div class="daycol"><div class="daynum">DAY 0</div><div class="daydate">'+fmtDate(m.day0.date)+'</div></div>'
+      +'<div class="mid"><div class="loc">'+esc(m.day0.loc)+'</div><div class="sub">Staging / arrival — 0 mi · nearest resupply: '+esc(m.day0.resupply)+'</div></div>'
+      +'</div><div class="note">🥾 Get to the trailhead, sort permits &amp; food, camp near the start. Logging begins Day 1.</div></div>';
+  }
   for(const r of m.rows){
     const vd=viewDay(r,"proj",m);
     if(vd.doneStart&&!vd.travel&&vd.miles<1e-9&&r.actualMi===null){
@@ -841,6 +902,8 @@ function renderLog(m){
     if(vd.questName){const q=activeQuests().find(x=>x.name===vd.questName); if(q&&q.alt) bits.push('<b>⛰ '+esc(q.name)+' — summit '+q.alt.toLocaleString()+' ft</b>');}
     if(vd.bigPasses.length) bits.push('<b>⛰ '+esc(vd.bigPasses.join(" · "))+'</b>');
     if(vd.note) bits.push(esc(vd.note));
+    if(r.keyPt) bits.push('<b>★ '+esc(r.keyPt)+'</b>');
+    if(r.campWarn) bits.push('<b style="color:var(--blaze)">⛔ '+esc(r.campWarn)+'</b>');
     if(vd.passes.length) bits.push('<b style="color:var(--trail)">🛒 Resupply: '+esc(vd.passes.join(" · "))+'</b>');
     const note=bits.length?'<div class="note">'+bits.join(" — ")+'</div>':"";
     html+='<div class="card'+(r.d===tDay?' today':'')+cardTint(vd.x,vd.passes.length>0,vd.note,false,!!vd.questName)+'" data-day="'+r.d+'" data-dview="proj"><div class="rowtop">'
@@ -848,6 +911,12 @@ function renderLog(m){
       +'<div class="mid"><div class="loc">'+esc(vd.loc)+mkBadges(vd.x,vd.questName)+'</div><div class="sub">'+(logged?'walked '+fmtMi(r.actualMi):'plan '+fmtMi(vd.miles))+' mi · JMT mi <span class="mono">'+fmtMi(vd.pos0)+' → '+fmtMi(vd.pos)+'</span>'+glTxt+varTxt+'</div></div>'
       +'<div class="iw"><input inputmode="decimal" placeholder="'+(r.entryMode==="pct"?fmtMi(vd.pos):fmtMi(vd.miles||r.rawPm))+'" value="'+esc(r.rawV)+'" data-actual="'+r.d+'" data-mode="'+r.entryMode+'" class="'+(logged?'filled':'')+'"><button class="ilbl" data-modetoggle="'+r.d+'">'+(r.entryMode==="pct"?"pct mile ⇄":"actual mi ⇄")+'</button></div>'
       +'</div>'+note+'</div>';
+  }
+  if(m.exitDay){
+    html+='<div class="card" style="border-style:dashed;border-color:var(--blaze)"><div class="rowtop">'
+      +'<div class="daycol"><div class="daynum">DAY '+m.exitDay.dayNum+'+</div><div class="daydate">'+fmtDate(m.exitDay.date)+'</div></div>'
+      +'<div class="mid"><div class="loc">'+esc(m.exitDay.name)+'</div><div class="sub">Exit / walk-out day</div></div>'
+      +'</div><div class="note">🏁 '+esc(m.exitDay.note)+'</div></div>';
   }
   document.getElementById("logList").innerHTML=html;
 }
@@ -862,6 +931,7 @@ function renderStones(m){
 }
 function renderPlan(m){
   let html="";
+  if(m.day0) html+='<div class="card" style="border-style:dashed;border-color:var(--trail)"><div class="sub"><b>DAY 0 · '+fmtDate(m.day0.date)+'</b> — '+esc(m.day0.loc)+' · resupply '+esc(m.day0.resupply)+'</div></div>';
   for(const r of m.rows){
     const vd=viewDay(r,"plan",m);
     if(vd.doneStart&&!vd.travel&&vd.miles<1e-9){
@@ -881,6 +951,7 @@ function renderPlan(m){
       +'<div class="iw"><input inputmode="decimal" placeholder="'+fmtMi(r.def)+'" value="'+(state.planned[r.d]??"")+'" data-plan="'+r.d+'"><div class="ilbl">predicted mi</div></div>'
       +'</div>';
   }
+  if(m.exitDay) html+='<div class="card" style="border-style:dashed;border-color:var(--blaze)"><div class="sub"><b>DAY '+m.exitDay.dayNum+'+ · '+fmtDate(m.exitDay.date)+'</b> — '+esc(m.exitDay.name)+': '+esc(m.exitDay.note)+'</div></div>';
   document.getElementById("planList").innerHTML=html;
 }
 function renderSetup(m){
@@ -892,6 +963,7 @@ function renderSetup(m){
   T("logMi",st.logMode!=="pct");T("logPct",st.logMode==="pct");
   T("dpOn",st.dayPeek!=="off");T("dpOff",st.dayPeek==="off");
   T("scDay",st.profScale!=="trail");T("scTrail",st.profScale==="trail");
+  T("stgOn",st.day0!==false);T("stgOff",st.day0===false);
   T("colOn",st.colors!==false);T("colOff",st.colors===false);
   T("legsOn2",st.legsOn===true);T("legsOff2",st.legsOn!==true);
   T("qOn",st.questsOn===true);T("qOff",st.questsOn!==true);
@@ -1009,10 +1081,7 @@ function dayProfile(r,view){
       const steps=Math.max(8,Math.round(g.mi/0.1)); // ~0.1mi sampling surfaces true cell peaks
       for(let i=0;i<=steps;i++){
         const f=i/steps, mile=g.a+(g.b-g.a)*f;
-        // use the cell extreme nearest this sample so passes/valleys punch through
-        const pk=elePeakAtMile(mile), lw=eleLowAtMile(mile), mid=eleAtMile(mile);
-        const climbing=(g.b-g.a)*(i>0?1:1)>=0;
-        pts.push({x:x+g.mi*f, e:mid, hi:pk, lo:lw});
+        pts.push({x:x+g.mi*f, e:eleFineAtMile(mile), hi:elePeakAtMile(mile), lo:eleLowAtMile(mile)});
       }
     }
     x+=g.mi;
@@ -1304,6 +1373,8 @@ on("logFixBtn",()=>{
 on("logMi",()=>{state.settings.logMode="mi";persist();renderAll();});
 on("logPct",()=>{state.settings.logMode="pct";persist();renderAll();});
 on("dpOn",()=>{state.settings.dayPeek="on";persist();renderAll();});
+on("stgOn",()=>{state.settings.day0=true;state.settings.exitDay=true;persist();renderAll();});
+on("stgOff",()=>{state.settings.day0=false;state.settings.exitDay=false;persist();renderAll();});
 on("scDay",()=>{state.settings.profScale="day";persist();renderAll();});
 on("scTrail",()=>{state.settings.profScale="trail";persist();renderAll();});
 on("dpOff",()=>{state.settings.dayPeek="off";persist();renderAll();});
