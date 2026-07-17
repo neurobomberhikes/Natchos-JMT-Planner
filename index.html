@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#16241B">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Natcho JMT">
+<title>Neurobomber’s Natcho JMT Planner</title>
+<style>
+:root{
+  --fir:#16241B; --fir2:#3d5245; --granite:#EBEDE6; --ink:#22301F;
+  --trail:#33684A; --amber:#E8A33D; --blaze:#B34A22;
+  --muted:#5a6657; --line:#d7dcd2; --card:#ffffff;
+  --disp:-apple-system-headline,'Avenir Next Condensed','Arial Narrow',-apple-system,sans-serif;
+  --body:-apple-system,'Helvetica Neue',Segoe UI,Roboto,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--granite);color:var(--ink);font-family:var(--body);max-width:520px;margin-inline:auto}
+header{background:var(--fir);color:#F2F4EE;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px}
+.eyebrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:1.2px;color:#9fb0a2;text-transform:uppercase}
+.headmain{display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px;gap:12px}
+.milelabel{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#9fb0a2}
+.milebig{font-family:var(--disp);font-weight:700;font-size:54px;line-height:.95;letter-spacing:.5px;font-stretch:condensed}
+.chip{display:inline-block;font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.5px;padding:3px 10px;border-radius:3px;text-transform:uppercase;font-stretch:condensed}
+.headstat{font-size:12px;color:#c6d0c4;margin-top:5px;text-align:right}
+.nextline{margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;color:var(--amber)}
+nav{display:flex;background:var(--fir);position:sticky;top:0;z-index:5}
+nav button{flex:1;padding:12px 0 13px;background:none;border:none;border-bottom:3px solid transparent;color:#9fb0a2;font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;font-stretch:condensed}
+nav button.on{color:#F2F4EE;border-bottom-color:var(--amber)}
+main{padding:12px 12px 4px}
+.hint{font-size:13px;color:var(--muted);margin:2px 4px 12px;line-height:1.45}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.card input,.card textarea,textarea{-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default}
+#dayOv{-webkit-user-select:none;user-select:none}
+.card.today{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.card.done{opacity:.55}
+.rowtop{display:flex;gap:10px;align-items:center}
+.daycol{width:78px;flex-shrink:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.daynum{font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.5px;color:var(--trail);font-stretch:condensed}
+.daydate{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:1px}
+.loc{font-weight:700;font-size:14.5px;line-height:1.25}
+.sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.mid{flex:1;min-width:0}
+.mono{font-family:var(--mono)}
+.pos{color:var(--trail);font-weight:600}.neg{color:var(--blaze);font-weight:600}
+.note{margin-top:8px;padding-top:7px;border-top:1px dashed var(--line);font-size:12px;color:#6b7566;line-height:1.4}
+.iw{width:78px;flex-shrink:0;text-align:center}
+.iw input{width:100%;padding:10px 6px;font-family:var(--mono);font-size:16px;font-weight:600;text-align:center;border:1.5px solid #c3cbbe;border-radius:5px;background:#F6F7F3;color:var(--ink)}
+.iw input.filled{border-color:var(--trail);background:#EEF4EE}
+.iw input:focus{outline:2px solid var(--amber);outline-offset:1px}
+.iw input::placeholder{color:#a9b3a6}
+.ilbl{font-family:var(--mono);font-size:9px;letter-spacing:.8px;color:#8a948a;margin-top:3px;text-transform:uppercase}
+button.ilbl{background:none;border:none;cursor:pointer;padding:0;width:100%;color:var(--trail);text-decoration:underline dotted}
+.ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reset{display:block;width:100%;margin-bottom:12px;padding:11px;background:#fff;border:1.5px solid var(--trail);border-radius:6px;color:var(--trail);font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;font-stretch:condensed}
+.reset.danger{border-color:var(--blaze);color:var(--blaze)}
+.setrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.setrow label{width:92px;flex-shrink:0;font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.4px;color:var(--trail);text-transform:uppercase;font-stretch:condensed}
+.setrow select,.setrow input{flex:1;min-width:0;padding:10px;font-size:15px;border:1.5px solid #c3cbbe;border-radius:5px;background:#F6F7F3;color:var(--ink);font-family:var(--body)}
+.seg2{display:flex;gap:0;border:1.5px solid var(--trail);border-radius:6px;overflow:hidden;flex:1}
+.seg2 button{flex:1;padding:10px;border:none;background:#F6F7F3;color:var(--trail);font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.6px;cursor:pointer;font-stretch:condensed}
+.seg2 button.on{background:var(--trail);color:#fff}
+footer{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 24px);font-size:11.5px;color:#7d877c;line-height:1.45}
+svg text{font-family:var(--mono)}
+.mk{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:2px;background:#FAF3D1;border:1px solid #d9c26a;color:#7a651f;white-space:nowrap}
+.mk.gold{background:#F6E2A8;border-color:#C99A2E;color:#6b4e0a}
+.card.bg-res{background:#F1E7D6}
+.card.bg-cent{background:#FAF3D1}
+.card.bg-warn{background:#FBE9E4}
+.card.bg-gold{background:#F6E2A8;border-color:#C99A2E}
+.card.bg-travel{background:#E7EDF4;border-color:#8ba3bd}
+.card.bg-quest{background:#EBE4F2;border-color:#a68cc4}
+.mk.quest{background:#EBE4F2;border-color:#a68cc4;color:#5b4479}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-family:var(--disp);font-weight:700;font-size:19px;letter-spacing:1px;color:var(--amber);text-transform:uppercase;font-stretch:condensed;margin-bottom:6px">Neurobomber’s Natcho JMT Planner</div>
+  <div class="eyebrow"><span id="tripLine">PCT</span><span id="saveNote" style="opacity:.55"></span></div>
+  <div class="headmain">
+    <div><div class="milelabel">CURRENT JMT MILE</div><div class="milebig" id="curMile">0.0</div></div>
+    <div style="text-align:right">
+      <div class="chip" id="varChip">no days logged yet</div>
+      <div class="headstat" id="stat1"></div>
+      <div class="headstat" id="stat2"></div>
+    </div>
+  </div>
+  <svg id="ribbon" viewBox="0 0 340 64" style="width:100%;height:64px;display:block;margin-top:12px" aria-label="Elevation profile"></svg>
+  <div class="nextline" id="nextLine"></div>
+</header>
+
+<nav>
+  <button data-tab="log" class="on">Log</button>
+  <button data-tab="stones">Milestones</button>
+  <button data-tab="plan">Plan</button>
+  <button data-tab="setup">Setup</button>
+</nav>
+
+<main>
+  <div id="jsWarn" style="background:#FBEEDC;border:1.5px solid #E8A33D;border-radius:6px;padding:12px 14px;margin:12px 12px 0;font-size:13.5px;line-height:1.5;color:#5a4a2a">
+    <b>Seeing this message?</b> This preview doesn't run the app's code — this happens when you tap the file in the iPhone Files app (Quick Look). To use the tracker: open it from its web address in Safari, or open the file in the free <b>Documents by Readdle</b> app.
+  </div>
+  <section id="tab-log">
+    <div id="bkBanner" class="card" style="display:none;border-color:var(--amber);background:#FBF3DC;align-items:center;gap:10px">
+      <div style="flex:1;min-width:0"><div class="daynum" style="color:#8a651f">🔒 BACKUP REMINDER</div><div class="sub" id="bkAgo"></div></div>
+      <button class="reset" id="bkNow" style="margin:0;padding:9px 12px;width:auto;flex-shrink:0">Back up now</button>
+    </div>
+    <div id="gpsBar" class="card" style="display:none;border-color:var(--trail);align-items:center;gap:10px" hidden>
+      <div style="flex:1;min-width:0">
+        <div class="daynum">GPS</div>
+        <div class="sub" id="gpsStatus">No fix yet</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="reset" id="locateBtn" style="margin:0;padding:8px 12px;width:auto">GPS Locate</button>
+        <button class="reset" id="logFixBtn" style="margin:0;padding:8px 12px;width:auto;display:none">→ Log today</button>
+      </div>
+    </div>
+    <p class="hint">Enter the miles you actually walked each day. Positions, dates, and milestones re-map to reality as you go.</p>
+    <div id="logList"></div>
+  </section>
+  <section id="tab-stones" hidden>
+    <p class="hint">Resupply points and key milestones on your route (🛒 in the Log marks actual resupply only). Plan date uses your predicted pace; ETA blends your actuals with predictions.</p>
+    <div id="stoneList"></div>
+  </section>
+  <section id="tab-plan" hidden>
+    <p class="hint">Set your predicted pace — it applies to every unlogged day and can be changed anytime. Fine-tune individual days below (per-day entries override the pace).</p>
+    <div class="card" style="display:flex;align-items:center;gap:12px;border-color:var(--trail)">
+      <div style="flex:1"><div class="daynum">PREDICTED PACE</div><div class="sub">Miles per day for all unlogged days</div></div>
+      <div class="iw"><input inputmode="decimal" placeholder="15" id="paceInput" data-pace="1"><div class="ilbl">mi / day</div></div>
+    </div>
+    <button class="reset" id="resetBtn">Reset per-day overrides</button>
+    <div id="planList"></div>
+  </section>
+  <section id="tab-setup" hidden>
+    <p class="hint">Note: the JMT requires a wilderness permit (Yosemite lottery for classic starts); Half Dome needs its own permit. Miles run 0 at Happy Isles to 210.4 at the Whitney summit, then descend to Whitney Portal at 237.9. Choose where and when your hike starts and ends. Mile markers are planning approximations (FarOut/Halfmile revisions shift them a little) — verify in your nav app.</p>
+    <div class="card">
+      <div class="setrow"><label>Direction</label>
+        <div class="seg2"><button id="dirNOBO" data-dir="NOBO">Happy Isles → Whitney</button><button id="dirSOBO" data-dir="SOBO">Whitney → Happy Isles</button></div>
+      </div>
+      <div class="setrow"><label>Start</label><select id="startSel"></select></div>
+      <div class="setrow"><label>End</label><select id="endSel"></select></div>
+      <div class="setrow"><label>Start date</label><input type="date" id="dateInput"></div>
+      <div class="setrow"><label>Flip-flop</label>
+        <div class="seg2"><button id="legsOn2">On</button><button id="legsOff2">Off</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Route changes for jumps, skips, flip-flops and yo-yos — position-based: "at mile X, jump to Y, continue NOBO/SOBO". Editor appears below when on.</div>
+      <div class="setrow"><label>Side quests</label>
+        <div class="seg2"><button id="qOn">On</button><button id="qOff">Off</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Bonus-mile detours (Mt. Whitney, custom peaks/hot springs) — extra days and gain are injected where each quest anchors.</div>
+      <div class="setrow"><label>Log entry</label>
+        <div class="seg2"><button id="logMi">Miles / day</button><button id="logPct">JMT mile</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Default for new log entries — enter miles walked, or the JMT mile you reached (miles walked is then calculated). Tap the label under any day's box to switch that day.</div>
+      <div class="setrow"><label>GPS</label>
+        <div class="seg2"><button id="gpsOn">On</button><button id="gpsOff">Off</button></div>
+      </div>
+      <div class="setrow"><label>GPS refresh</label>
+        <div class="seg2"><button id="gpsMan">Manual</button><button id="gpsAuto">Auto</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Uses single position fixes only (seconds of radio — minimal battery). Manual: fix only when you tap Locate. Auto: one fix when opening Log/Plan, at most every 5 min. Off: GPS never used.</div>
+      <div class="setrow"><label>Day profile</label>
+        <div class="seg2"><button id="dpOn">On</button><button id="dpOff">Off</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Press &amp; hold the day/date on any Log or Plan card to peek that day's elevation profile; release to close.</div>
+      <div class="setrow"><label>Colours</label>
+        <div class="seg2"><button id="colOn">On</button><button id="colOff">Off</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 8px 102px">Shades important days: <span class="mk" style="margin-left:0;background:#FBE9E4;border-color:#d99;color:#8a3b25">warnings/dry</span> <span class="mk" style="background:#F1E7D6;border-color:#c9b48e;color:#6b5636">resupply</span> <span class="mk">100-mile marks</span> <span class="mk gold">halfway &amp; terminus</span></div>
+      <div class="sub" id="setupSummary" style="margin-top:4px"></div>
+    </div>
+    <div id="rcEditor" style="display:none">
+      <div class="sub" style="margin:2px 4px 8px"><b>Route changes</b> — trailhead to trailhead, applied in trip order; direction persists until the next change. Travel day inserts a zero-mile day at the jump. Presets below build a typical pattern you can then adjust. The Cottonwood presets include the Whitney summit (delete the first change to skip it).</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="reset" id="pJump" style="margin:0;flex:1;padding:9px 4px">Jump / skip</button>
+        <button class="reset" id="pFlip" style="margin:0;flex:1;padding:9px 4px">Flip-flop</button>
+        <button class="reset" id="pYoyo" style="margin:0;flex:1;padding:9px 4px">Yo-yo</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="reset" id="pCwExit" style="margin:0;flex:1;padding:9px 4px">Exit via Cottonwood</button>
+        <button class="reset" id="pCwStart" style="margin:0;flex:1;padding:9px 4px">Start via Cottonwood</button>
+      </div>
+      <div id="rcList"></div>
+      <button class="reset" id="rcAdd">Add route change</button>
+    </div>
+    <div id="qEditor" style="display:none">
+      <div class="sub" style="margin:2px 4px 8px"><b>Side quests</b> — tick to add the miles, days and climb at each anchor.</div>
+      <div id="qBuiltins" class="card"></div>
+      <div id="qCustom"></div>
+      <button class="reset" id="cqAdd">Add custom quest</button>
+    </div>
+    <div class="card">
+      <div class="daynum">BACKUP &amp; RESTORE</div>
+      <div class="sub" id="bkStatus" style="margin-top:4px"></div>
+      <div class="setrow" style="margin-top:8px;margin-bottom:6px"><label>Remind every</label><input inputmode="numeric" id="bkDays" data-bkdays="1" style="max-width:80px;flex:0"><div class="sub" style="margin:0">days (0 = off)</div></div>
+      <div style="display:flex;gap:8px;margin:8px 0">
+        <button class="reset" id="bkShare" style="margin:0;flex:1">Share backup</button>
+        <button class="reset" id="bkCopy" style="margin:0;flex:1">Copy backup</button>
+      </div>
+      <textarea id="bkText" rows="3" style="width:100%;font-family:var(--mono);font-size:11px;border:1.5px solid #c3cbbe;border-radius:5px;background:#F6F7F3;padding:8px;box-sizing:border-box" placeholder="Backup text appears here when you share/copy — or paste a backup here and tap Import."></textarea>
+      <button class="reset" id="bkImport" style="margin:8px 0 4px">Import from text</button>
+      <div class="sub" style="margin-top:8px"><b>On-device snapshots</b> — taken automatically on first open each day:</div>
+      <div id="snapList"></div>
+      <div class="note">Share/copy puts your data somewhere off this phone (Notes, a message to yourself). Snapshots protect against accidental erases but live on this phone — they can't survive deleting the app icon.</div>
+    </div>
+    <div class="card" style="border-color:var(--amber);background:#FBF3DC">
+      <div class="daynum" style="color:#8a651f">☕ ENJOYING THE NATCHO?</div>
+      <div class="sub" style="margin-top:4px">The Natcho is free for personal use, built by one hiker. Coffees fund trail-data updates and new trails.</div>
+      <a href="https://buymeacoffee.com/Neurobomberhikes" target="_blank" rel="noopener" class="reset" style="display:block;text-align:center;text-decoration:none;margin:10px 0 2px;background:var(--amber);border-color:#C99A2E;color:#3d2f0a">☕ Buy me a coffee</a>
+    </div>
+    <div class="card">
+      <div class="daynum">VERSION &amp; SHARING</div>
+      <div class="sub" id="verLine" style="margin-top:4px"></div>
+      <div class="sub" id="verStatus" style="margin-top:4px"></div>
+      <button class="reset" id="verBtn" style="margin:8px 0">Check for update</button>
+      <div class="sub">Share the Natcho — the official source is:</div>
+      <div class="mono" id="shareUrl" style="font-size:13px;margin:4px 0;word-break:break-all"></div>
+      <button class="reset" id="shareBtn" style="margin:8px 0">Share link</button>
+      <div style="text-align:center"><img id="qrImg" alt="QR code link to the app" style="display:none;width:200px;max-width:70%;margin:4px auto;border:6px solid #fff;border-radius:6px;background:#fff"></div>
+      <div class="note">Copies of this file frozen outside the official link don't receive trail-data or bug updates.</div>
+    </div>
+    <button class="reset danger" id="wipeBtn">Erase all logged days &amp; overrides</button>
+    <div class="card" style="border-color:var(--blaze)">
+      <div class="daynum" style="color:var(--blaze)">DATA &amp; ACCURACY — READ FIRST</div>
+      <div class="sub" style="margin-top:6px"><b>This app is a beta, for experimental use only. All data is unverified and should not be relied on.</b> It is a planning toy, not a navigation, safety, or decision-making tool. Always carry and use a dedicated navigation app (FarOut, Gaia, CalTopo) and paper backup.</div>
+      <div class="note"><b>Sources.</b> Trail centerline: Pacific Crest Trail Association (PCTA) published route data. Elevation: USGS / NASA SRTM public-domain terrain models, sampled via GPS Visualizer. Waypoints and mile markers: compiled by hand and approximate.</div>
+      <div class="note"><b>Known caveats.</b> Mile markers can differ from FarOut/Halfmile by a mile or more (trail reroutes; calibrated only at ~36 trailheads). Elevation is sampled every 0.1 mi and smoothed — summits read slightly low and daily climb totals are estimates. Water sources, resupply status, trail closures, snow, and fire conditions are NOT tracked here and change constantly. Trail access rules change (e.g., entry into Canada is currently not permitted). Verify everything against current official sources before acting on it.</div>
+    </div>
+    <div class="card" id="emgCard" style="border-color:var(--blaze)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div class="daynum" style="color:var(--blaze)">🆘 LAST GPS FIX</div>
+          <div id="emgCoords" style="font-family:var(--mono);font-weight:600;font-size:28px;line-height:1.25;margin-top:6px;white-space:pre-line">GPS is off</div>
+          <div class="sub" id="emgTime" style="margin-top:4px"></div>
+          <div class="sub" id="gpsStatus2" style="margin-top:2px"></div>
+        </div>
+        <button class="reset" id="locateBtn2" style="margin:0;padding:10px 12px;width:auto;flex-shrink:0">GPS Locate</button>
+      </div>
+      <div class="note">Decimal degrees (lat / lon) — readable to search &amp; rescue. Coordinates stay on this phone.</div>
+    </div>
+  </section>
+</main>
+
+<div id="dayOv" style="display:none;position:fixed;inset:0;background:rgba(12,20,14,.6);z-index:60;align-items:center;justify-content:center;padding:18px">
+  <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 14px 10px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.35)">
+    <div class="daynum" id="ovTitle" style="font-size:19px"></div>
+    <div class="sub" id="ovSub"></div>
+    <svg id="ovSvg" viewBox="0 0 320 170" style="width:100%;height:auto;display:block;margin-top:8px"></svg>
+    <div class="sub" id="ovStats" style="margin-top:6px"></div>
+    <div class="ilbl" style="text-align:center;margin-top:8px">release to close</div>
+  </div>
+</div>
+<footer>Mileages are planning estimates — verify routing and water in FarOut / Gaia / CalTopo. Entries save on this device automatically and the app works offline after its first online load. © 2026 Neurobomber. All rights reserved. · Personal, noncommercial use only. · <a href="https://buymeacoffee.com/Neurobomberhikes" target="_blank" rel="noopener" style="color:#8a651f">☕ Buy me a coffee</a></footer>
+
+<script>
+// ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
+const APP_VERSION="1.0.0";
+const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
+const CANONICAL_PIN=""; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
+function canonical(){
+  if(CANONICAL_PIN) return CANONICAL_PIN;
+  if(typeof location!=="undefined"&&location.protocol==="https:") return location.origin+location.pathname.replace(/index\.html$/,"");
+  return "";
+}
+const WPTS=[[0,"Happy Isles Trailhead (Yosemite Valley)","TR"],[3.5,"Little Yosemite Valley",""],[4.8,"Half Dome Junction",""],[12.8,"Sunrise / Long Meadow",""],[17.4,"Cathedral Pass","P"],[22.9,"Tuolumne Meadows","TR"],[35.4,"Donohue Pass","P"],[42.3,"Thousand Island Lake",""],[56.6,"Devils Postpile jct",""],[58.2,"Reds Meadow / Mammoth","TR"],[76.1,"Silver Pass","P"],[85.7,"VVR jct (Lake Edison ferry)","R"],[94.4,"Selden Pass","P"],[104.1,"Muir Trail Ranch","R"],[127.3,"Muir Pass","P"],[138.4,"Golden Staircase",""],[147.9,"Mather Pass","P"],[159.0,"Pinchot Pass","P"],[167.0,"Rae Lakes",""],[171.2,"Glen Pass","P"],[176.0,"Kearsarge Pass jct (Independence)","TR"],[187.6,"Forester Pass","P"],[200.5,"Crabtree Meadow / ranger",""],[204.4,"Guitar Lake",""],[208.7,"Mt. Whitney summit","M"],[210.4,"Trail Crest",""],[219.2,"Whitney Portal","TR"],[219.3,"JMT/PCT split (Cottonwood corridor)",""],[233.1,"Chicken Spring Lake",""],[234.0,"Cottonwood Pass","P"],[237.9,"Horseshoe Meadow Trailhead","TR"]];
+const TRAILHEADS=WPTS.filter(w=>w[2].includes("T"));
+const SEGS=[[0,"Happy Isles / Nevada Fall climb","Huge granite staircase out of the Valley; crowds thin above Nevada Fall"],[3.5,"Little Yosemite Valley","First legal camp; bear boxes"],[4.8,"Half Dome jct / Sunrise Creek","Half Dome cables need their own permit"],[12.2,"Sunrise / Long Meadow",""],[16.3,"Cathedral Pass / Cathedral Lakes","Cathedral Peak views; busy day-hike zone"],[22.9,"Tuolumne Meadows","Seasonal store & grill — last easy resupply until Reds"],[24.8,"Lyell Canyon","Flat and lovely; July mosquitoes are serious"],[31.9,"Donohue climb","Leave Yosemite at the pass"],[36.4,"Rush Creek / Island Pass",""],[40.5,"Thousand Island / Garnet","Banner and Ritter postcard country"],[46.1,"Shadow Lake / Rosalie",""],[53.8,"Devils Postpile approach","Columnar basalt worth the short spur"],[58.2,"Reds Meadow","Store, café, Mammoth shuttle"],[62.1,"Crater Meadow / Deer Creek",""],[68.8,"Purple Lake / Lake Virginia",""],[73.7,"Tully Hole / Silver Pass climb",""],[77.5,"Mono Creek / VVR country","VVR via ferry or Mono Creek trail"],[87.2,"Bear Ridge / Bear Creek","Fords early season"],[92.0,"Sallie Keyes / Selden Pass",""],[100.7,"Senger Creek descent",""],[104.1,"Muir Trail Ranch / San Joaquin","Last bucket resupply on the route"],[107.5,"Evolution Valley","Evolution Creek ford — serious in early season"],[114.3,"Evolution Basin","Arguably the finest miles of the JMT"],[123.0,"Muir Pass approach","Long rocky basin; Muir Hut on top"],[128.9,"LeConte Canyon","Big descent past the Monster Rock"],[137.3,"Golden Staircase / Palisade Lakes","Steepest sustained climb on the JMT"],[144.8,"Upper Basin / Mather Pass",""],[151.1,"South Fork Kings / Lake Marjorie",""],[156.4,"Pinchot Pass",""],[161.7,"Woods Creek suspension bridge","One at a time on the bouncy bridge"],[165.9,"Rae Lakes","Painted Lady; strict one-night camping limits"],[170.1,"Glen Pass","Snow lingers on the north side"],[174.4,"Charlotte Lake / Kearsarge jct","Exit over Kearsarge Pass to Onion Valley / Independence"],[179.7,"Vidette Meadow / Bubbs Creek",""],[185.0,"Forester approach",""],[187.6,"Forester Pass","13,120 ft — highest pass on the route"],[191.5,"Bighorn Plateau / Tyndall Creek",""],[198.2,"Wallace / Crabtree","Ranger station; wag bags issued here"],[204.4,"Guitar Lake","Classic summit-eve camp"],[206.3,"Whitney switchbacks","Trail Crest — most drop packs for the summit spur"],[208.7,"Mt. Whitney summit","14,505 ft — top of the lower 48"],[210.4,"Trail Crest / 99 switchbacks","Long, hot descent"],[214.4,"Trail Camp / Outpost Camp",""],[219.2,"Whitney Portal","Burgers at the Portal Store; exit"],[219.3,"Cottonwood corridor / Sandy Meadow","Alternate exit: PCT south from the JMT split"],[226,"Guyot Flat / Siberian Outpost","Dry, sandy plateau country"],[232,"Chicken Spring Lake","Last reliable water before the pass"],[234.0,"Cottonwood Pass descent","Switchbacks down to Horseshoe Meadow"]];
+function segFor(mile){let out=SEGS[0];for(const g of SEGS){if(g[0]<=mile+1e-9)out=g;else break;}return out;}
+const QUESTS=[
+ {id:"halfdome",name:"Half Dome (permit req.)",at:4.8,mi:4,gain:1850,alt:8839},
+ {id:"cloudsrest",name:"Clouds Rest",at:14.0,mi:5,gain:1500,alt:9926}];
+
+// ---------------- storage ----------------
+const KEY="jmt_full_v1";
+let memStore=null;
+function loadState(){
+  try{const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw);}catch(e){}
+  return memStore||defaultState();
+}
+function defaultState(){
+  const t=new Date();
+  const iso=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+  return {actuals:{},planned:{},pace:"",routeChanges:[],questSel:{},customQuests:[],
+    settings:{dir:"NOBO",start:0,end:219.2,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false}};
+}
+function saveState(s){
+  memStore=s;
+  try{localStorage.setItem(KEY,JSON.stringify(s)); flashSave("saved");}
+  catch(e){flashSave("preview mode — entries won’t persist");}
+}
+let saveT=null, state=loadState();
+function normalize(st){
+if(!st.settings) st.settings=defaultState().settings;
+if(st.settings.end===2658.9) st.settings.end=237.9;
+if(st.settings.start===2658.9) st.settings.start=237.9;
+if(st.settings.colors===undefined) st.settings.colors=true;
+if(!st.settings.logMode) st.settings.logMode="mi";
+if(!st.settings.gps) st.settings.gps="off";
+if(!st.settings.gpsMode) st.settings.gpsMode="manual";
+if(st.settings.legsOn===undefined) st.settings.legsOn=false;
+if(st.settings.questsOn===undefined) st.settings.questsOn=false;
+if(!Array.isArray(st.routeChanges)) st.routeChanges=[];
+if(!st.questSel) st.questSel={};
+if(!Array.isArray(st.customQuests)) st.customQuests=[];
+if(st.settings.backupDays===undefined) st.settings.backupDays="1";
+if(st.settings.dayPeek===undefined) st.settings.dayPeek="on";
+if(!st.actuals) st.actuals={}; if(!st.planned) st.planned={};
+for(const k in st.actuals){ if(typeof st.actuals[k]==="string") st.actuals[k]={v:st.actuals[k],m:"mi"}; }
+}
+normalize(state);
+function persist(){clearTimeout(saveT); flashSave("saving…"); saveT=setTimeout(()=>saveState(state),400);}
+function flashSave(msg){const el=document.getElementById("saveNote"); el.textContent=msg; if(msg==="saved") setTimeout(()=>{if(el.textContent==="saved")el.textContent="";},1500);}
+
+// ---------------- helpers ----------------
+const num=v=>{const n=parseFloat(v); return isNaN(n)?null:n;};
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const fmtMi=n=>(Math.round(n*10)/10).toLocaleString("en-US",{minimumFractionDigits:1,maximumFractionDigits:1});
+function startDate(){const p=(state.settings.date||"").split("-").map(Number); return p.length===3&&p[0]?new Date(p[0],p[1]-1,p[2]):new Date();}
+const dateForDay=d=>{const t=startDate(); t.setDate(t.getDate()+(d-1)); return t;};
+const fmtDate=d=>d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+const todayDayNum=()=>Math.floor((new Date().setHours(0,0,0,0)-startDate().setHours(0,0,0,0))/86400000)+1;
+function wname(mi){const w=WPTS.find(x=>Math.abs(x[0]-mi)<0.05); return w?w[1]:"mi "+fmtMi(mi);}
+
+// ---------------- elevation ----------------
+const ELE={step:0.5,e:[4027,4242,4495,4838,5211,5561,5833,5959,6133,6132,6183,6480,6806,7057,7241,7477,7691,7870,8061,8181,8409,8511,8872,9377,9681,9576,9345,9312,9317,9396,9558,9823,9931,9754,9652,9560,9447,9565,9375,9148,9133,8850,8634,8653,8643,8692,8644,8643,8676,8718,8732,8792,8815,8829,8833,8842,8846,8865,8881,8911,8908,8963,8963,8971,9215,9656,9756,10125,10436,10559,10824,11024,10728,10483,10365,10199,10088,9907,9673,9700,10005,10176,10194,10148,10005,9858,9928,10084,9920,9694,9809,10063,9903,9582,9266,9035,8857,8786,9073,9393,9396,9600,9599,9429,9299,9177,8912,8639,8371,8136,8108,7907,7687,7721,7700,7485,7547,7758,7930,8101,8286,8467,8637,8808,8937,9104,9185,9166,9107,9260,9441,9704,9911,10055,10106,10143,10170,10086,9935,10272,10414,10398,10174,9916,10130,10438,10487,10328,10397,10308,9918,9566,9438,9201,9370,9644,9896,10148,10398,10548,10826,10655,10442,10325,10108,9775,9614,9346,8908,8751,8517,8245,7967,7906,7851,8224,8609,9029,9428,9708,9911,9925,9839,9526,9247,9031,8960,9007,9097,9173,9262,9344,9490,9554,9770,9972,10104,10296,10498,10570,10809,10616,10502,10230,10169,10122,10030,10048,9803,9613,9235,8839,8556,8293,8133,7959,7888,7887,7920,7983,8043,8144,8156,8226,8318,8370,8433,8455,8787,9072,9200,9218,9326,9467,9536,9638,9672,9742,9810,9918,10161,10539,10794,10873,10914,10887,10964,11015,11198,11316,11401,11469,11498,11553,11786,11825,11636,11574,11289,11051,10846,10668,10401,10125,9789,9441,9293,9227,9020,8843,8767,8644,8493,8346,8288,8229,8202,8048,8231,8383,8424,8538,8609,8730,8851,8900,9095,9473,9798,10128,10396,10585,10705,10802,10855,10980,11208,11528,11846,12020,11749,11566,11458,11269,11072,10914,10685,10550,10387,10209,10054,10396,10671,10901,11041,11143,11280,11586,11932,11897,11562,11447,11292,11048,10883,10580,10329,9965,9670,9496,9192,9029,8849,8577,8584,8834,9023,9233,9434,9600,9881,10185,10295,10439,10548,10569,10591,10543,10779,11166,11513,11927,11516,11166,10969,10755,10699,10325,9934,9543,9553,9872,10022,10175,10333,10442,10575,10799,11016,11293,11497,11813,12099,12360,12741,13063,12823,12504,12314,12154,11934,11810,11556,11359,11154,10936,11032,11126,11324,11366,11108,10908,10764,10631,10412,10681,10851,10948,10753,10642,10815,10746,10673,10735,10874,11080,11229,11515,11535,11782,12143,12533,12927,13299,13666,13771,14072,14395,14257,13969,13732,13534,13445,13069,12717,12412,12058,11822,11409,10994,10622,10370,10220,9994,9711,9396,9030,8732,8460,10519,10343,10629,10560,10562,10612,10698,10714,10458,10323,9804,9577,9738,9977,10360,10524,10821,10950,10978,10946,10979,11103,11260,11396,11358,11330,11391,11495,11241,11134,10874,10597,10319,10089,9962,9950,9920],g:[215,252,344,373,350,271,140,177,30,59,296,327,251,184,236,214,179,192,120,228,101,362,504,315,0,0,1,10,78,162,266,107,0,0,0,2,118,0,5,14,0,32,80,13,50,6,10,33,42,15,60,24,13,11,9,7,19,21,30,1,55,10,9,244,441,111,369,311,128,265,219,0,0,0,0,0,0,0,58,305,171,38,0,0,18,70,156,31,0,118,254,0,0,0,0,0,0,287,320,48,204,64,0,0,0,0,0,0,0,5,0,0,48,9,0,100,211,172,171,185,181,170,171,129,167,82,1,11,153,181,263,208,144,51,37,31,0,0,337,143,24,0,0,218,308,63,0,70,11,0,0,0,0,203,274,252,253,249,150,278,31,0,0,0,0,0,0,0,0,0,0,0,0,24,373,385,420,398,281,202,21,0,0,0,0,0,62,90,76,89,82,146,64,216,202,132,192,201,73,239,13,0,0,0,0,25,53,0,0,0,0,0,0,0,0,0,14,61,72,67,102,22,69,93,53,63,25,332,285,128,24,107,141,69,103,34,70,68,108,244,378,255,83,62,13,85,51,183,119,85,68,34,57,233,139,0,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0,184,152,41,113,71,121,121,56,195,378,325,331,268,188,120,97,54,133,228,320,318,206,0,0,0,0,0,0,0,0,0,0,6,342,274,230,141,102,137,305,347,115,0,0,0,0,0,0,0,0,0,0,0,0,0,0,66,250,189,210,201,166,281,305,109,144,110,21,23,2,237,387,347,414,0,0,0,0,2,0,0,0,33,319,150,153,158,110,132,225,216,277,205,316,286,260,381,322,19,0,0,0,0,0,0,0,0,0,129,94,198,77,0,0,0,0,0,269,170,97,1,0,173,34,0,62,142,206,151,287,55,247,361,390,394,372,367,115,301,322,50,0,0,11,54,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,13,285,35,37,54,86,159,0,0,0,19,161,238,383,164,297,129,29,2,33,124,157,136,13,10,61,104,0,0,0,0,0,0,0,7,1],total:237.9};
+const CAL=[[0,0],[237.9,237.9]];
+function nom2trk(m){
+  if(m<=CAL[0][0]) return CAL[0][1]+(m-CAL[0][0]);
+  for(let i=1;i<CAL.length;i++){
+    if(m<=CAL[i][0]){const [a,ta]=CAL[i-1],[b,tb]=CAL[i];return ta+(m-a)/(b-a)*(tb-ta);}
+  }
+  return CAL[CAL.length-1][1]+(m-CAL[CAL.length-1][0]);
+}
+function trk2nom(t){
+  if(t<=CAL[0][1]) return CAL[0][0]+(t-CAL[0][1]);
+  for(let i=1;i<CAL.length;i++){
+    if(t<=CAL[i][1]){const [a,ta]=CAL[i-1],[b,tb]=CAL[i];return a+(t-ta)/(tb-ta)*(b-a);}
+  }
+  return CAL[CAL.length-1][0]+(t-CAL[CAL.length-1][1]);
+}
+const SEAM_I=Math.floor(219.2/0.5); // last main-zone grid index
+function eleAtTrk(d){
+  d=Math.max(0,Math.min(d,ELE.total));
+  if(d<=219.2){
+    const x=d/ELE.step; const i=Math.min(SEAM_I,Math.floor(x));
+    if(i>=SEAM_I) return ELE.e[SEAM_I];
+    return ELE.e[i]+(ELE.e[i+1]-ELE.e[i])*(x-i);
+  }
+  const x=d/ELE.step; const i=Math.max(SEAM_I+1,Math.floor(x));
+  if(Math.floor(x)<=SEAM_I) return ELE.e[SEAM_I+1];
+  const j=Math.min(ELE.e.length-2,i);
+  return ELE.e[j]+(ELE.e[j+1]-ELE.e[j])*Math.min(1,Math.max(0,x-j));
+}
+function eleAtMile(m){return eleAtTrk(nom2trk(m));}
+function gainLoss(mileA,mileB){
+  const lo=nom2trk(Math.min(mileA,mileB)), hi=nom2trk(Math.max(mileA,mileB));
+  const a=lo/ELE.step, b=hi/ELE.step;
+  let g=0;
+  for(let i=Math.floor(a);i<Math.min(Math.ceil(b),ELE.g.length);i++){
+    const f=Math.min(i+1,b)-Math.max(i,a);
+    if(f>0) g+=ELE.g[i]*Math.min(1,f);
+  }
+  const de=eleAtTrk(hi)-eleAtTrk(lo);
+  let up=g, down=g-de;
+  if(mileB<mileA){const t=up;up=down;down=t;}
+  return {up:Math.max(0,Math.round(up)),down:Math.max(0,Math.round(down))};
+}
+
+// ---------------- GPS ----------------
+const TRK={step:0.1,dlat:[377328,-14,-13,-14,-14,-8,-3,3,-2,-6,3,-1,-6,-1,-4,-3,-1,-12,-4,6,4,-2,-1,12,3,-7,-5,-4,-6,0,-4,-1,-4,2,5,11,13,7,8,6,8,10,10,2,6,8,9,10,4,6,8,6,9,13,13,10,5,1,6,8,5,9,6,7,-3,-4,-2,-4,3,-3,6,0,-5,2,9,10,8,8,6,7,1,6,8,11,13,12,10,12,7,9,6,5,2,0,0,-2,0,3,8,6,6,0,-2,4,10,13,14,14,11,11,7,7,9,11,10,4,9,9,12,13,14,10,5,5,5,9,13,13,14,14,13,10,9,12,11,13,5,6,14,14,13,14,14,14,15,14,14,14,14,14,9,8,12,9,0,7,12,12,13,12,13,14,14,13,14,14,14,14,13,13,11,12,11,14,10,14,13,14,13,11,11,14,13,11,13,10,10,9,10,10,9,9,10,6,1,3,10,9,12,11,0,4,3,4,7,7,7,10,6,3,-6,0,-3,-4,-2,-4,2,0,-3,4,-6,-5,0,6,0,-2,-1,0,5,5,4,0,-3,-5,-2,-3,-7,-4,-3,-7,3,0,-1,-3,-3,-6,0,-2,-2,-2,-1,2,-6,3,-2,-10,-9,-10,-11,-12,-13,-13,-12,-12,-11,-10,-11,-8,-11,-12,-12,-12,-12,-13,-13,-14,-14,-13,-14,-12,-13,-13,-13,-12,-11,-12,-14,-12,-12,-3,-14,-14,-13,-10,-13,-13,-10,-14,-13,-10,-4,-12,-13,-14,-14,-12,-12,-13,-14,-13,-13,-13,-15,-13,-14,-13,-12,-14,-10,-14,-14,-11,-8,-5,-7,-12,-13,-12,-13,-13,-12,-13,-7,-10,-8,-11,-13,-12,-12,-7,-10,-13,-14,-2,5,3,7,5,8,11,-13,-12,-12,-5,-7,-9,-4,5,11,4,8,14,11,-5,-7,1,-7,-1,-8,-8,-4,-3,-6,-9,-13,-13,-10,-11,-11,-9,-7,-12,-11,-5,-10,-4,-9,-9,-1,-9,-1,-9,-1,-9,-4,-7,-8,-6,4,-6,-1,1,-4,-6,-6,-13,-11,-9,-13,-11,-4,-3,1,-7,-3,3,-5,-8,3,1,-1,-6,-4,-9,-9,-9,-7,-9,-9,-5,-5,-11,-6,-6,-8,-4,-8,-8,-12,-8,-11,-7,-6,-4,11,4,-1,-14,-14,-10,-12,-7,-1,-7,-3,-5,-8,-7,-4,-9,-9,-11,-12,-8,-12,-9,-6,-7,-9,-5,-7,-10,-3,-11,-11,-12,3,10,9,4,-3,12,-6,-13,-1,-2,1,1,-3,6,-5,-3,-2,-2,-7,-2,-10,-7,-3,-6,-14,-6,-4,-13,-7,-12,-10,-7,-10,-10,-14,-11,-2,-11,-6,-5,-8,-10,-12,-13,-12,-10,-13,-11,-10,-6,-14,-8,5,-10,-9,-11,-12,-13,-9,-10,-12,-14,-13,-14,-13,-14,-3,8,5,1,-12,-13,-10,-9,-12,-7,-3,-7,-14,-10,-14,4,-14,-13,-10,-13,-14,-14,-14,-14,-14,-13,-14,-12,-14,-14,-14,-10,-1,-13,2,2,-7,-4,-6,-8,0,-13,-10,-12,-11,-12,-13,-7,-10,4,6,-1,-8,10,-13,-14,-14,-14,-15,-14,-13,14,13,15,-8,-14,-13,-12,-14,-13,-10,-9,-5,-10,-6,-7,-11,-11,-13,-12,-6,-13,-7,-13,-14,-13,-7,-7,-9,-13,-14,-14,-14,-12,-14,-11,4,0,-9,-15,-13,-12,-11,-10,-14,-13,-14,-8,-8,1,2,1,0,-1,-3,-8,-8,-7,-5,1,-1,-8,-10,1,10,8,10,-4,-11,-12,-14,-14,-9,-2,2,-13,-14,-10,-11,-5,-1,2,-13,-10,4,4,6,2,9,9,-1,-6,-3,-13,-10,-14,-14,-14,-12,-12,-13,-10,-10,-13,-2,7,6,4,10,7,3,0,5,-1,-12,-7,4,1,-11,2,-13,-8,-8,-10,-10,-8,-10,-12,-9,-5,-2,-5,-3,4,-13,-11,-8,-12,-14,-13,-12,-12,-7,-1,3,0,-7,-9,-6,3,-4,-4,-4,-8,-8,-10,-11,-10,-12,-12,-11,-9,-12,-1,-11,-11,-10,-6,-5,-5,-12,-13,-11,-12,-14,-4,-4,-7,-1,10,-2,-6,-4,-7,-7,-7,-13,-8,-1,0,-3,-11,-12,-8,1,1,7,-7,-12,-8,-10,-8,-8,-13,-11,-11,-7,-13,-15,-13,-14,-14,-13,-14,-13,-12,-12,-14,-14,-9,-2,-6,-15,-9,-10,-4,-6,0,-6,-6,-8,-13,-6,3,2,8,1,-6,-13,-14,-13,-13,-13,-13,-10,-14,-13,-7,-8,-5,-10,-14,-13,-13,-10,-9,-3,-10,-10,1,-5,-5,-2,-2,-10,-9,-8,-6,-9,-7,-3,-3,-6,-10,-11,-10,-7,-4,-1,-3,0,-5,-4,-4,-4,-7,-3,-6,-10,-12,-4,-13,-4,-9,-5,1,-11,-11,-10,-10,-13,-11,-9,-8,-10,-11,-8,-7,-8,-8,-2,-6,-5,-7,-5,1,-3,-3,-6,-6,-4,-7,-7,-10,-12,-12,-6,-2,-7,-10,-12,-6,-10,-10,-10,-12,-12,-13,-13,-13,-14,-11,-13,-13,-13,-9,-10,-14,-14,-9,-10,-9,-10,-13,-13,-14,-12,-13,-11,-10,-14,-13,-14,-10,-12,-10,-13,-12,-8,-9,-7,-8,-12,-12,-11,-10,-13,-13,-13,-10,-10,-11,-13,-12,-14,-13,-12,-11,-1,-11,-14,-13,-13,-13,-14,-13,-13,-8,-6,-9,-9,-10,-1,-7,-13,-13,-14,-15,-11,-13,-11,-4,-9,-13,-1,-14,-13,-15,-9,-8,-14,-14,-14,-12,-11,-6,-8,-10,-1,-13,-8,7,-8,-1,-1,0,-8,-5,-12,-14,-11,-12,-10,-2,-3,-8,-14,8,4,-13,2,5,-9,-12,-13,-6,5,-12,-6,-6,-5,-10,-10,-13,-13,-9,-7,-4,-7,-6,-5,-7,-6,-10,-14,-13,-12,-10,-9,-9,-9,-4,-7,-5,-2,2,1,4,7,8,6,-3,-10,-2,5,4,4,-2,-7,-8,-9,-8,-7,-12,-10,-13,-11,-7,-5,-4,-7,-8,-5,-11,-12,-11,-11,-12,-11,-7,-6,-3,-7,-7,-11,-12,-13,-13,-14,-14,-8,-10,-1,14,8,-8,-3,-6,-2,12,-4,8,1,0,1,1,-4,4,12,2,-1,3,-3,-4,-13,-7,-5,-7,-3,-2,-3,-5,-4,-2,-5,-8,-5,-3,-4,0,-4,0,1,-6,1,-4,-3,-9,-1,-9,-5,-4,-4,-8,-4,-2,-8,-11,-10,-14,-6,-9,-9,-3,-10,-9,-3,0,0,4,3,3,11,10,4,3,-6,-10,-5,-13,-12,-6,8,5,0,-7,-11,-14,-9,-13,-14,-11,-12,-14,-13,-10,-10,-11,-10,-12,-13,-14,-14,-13,-14,-13,-12,-14,-11,-10,-14,-14,-14,-14,-13,-14,-14,-14,-14,-6,-12,-11,-6,-10,-8,-12,-11,-9,-10,-8,-8,-7,-12,-10,-8,-4,-7,-2,-6,-7,-12,-4,-4,7,6,0,10,-6,9,14,8,9,9,9,3,3,4,7,8,9,0,2,11,8,-5,4,-5,-5,2,-7,-5,-13,-11,-7,-9,-9,-6,-7,-3,-7,-11,-4,2,-2,-5,5,-6,2,5,-5,-2,-2,-3,-3,5,-1,2,2,1,2,-8,-2,3,-7,-13,-10,-12,-7,-13,-7,-8,-7,-12,-12,-14,-14,-12,-14,-9,-12,-14,-13,-14,-11,-14,-14,-11,-14,-11,-15,-14,-14,-14,-14,-13,-14,-12,-13,-11,-12,-13,-10,-11,-14,-9,-11,-14,-13,-9,-10,-10,-13,-12,-5,-1,4,7,2,1,-3,8,-2,-8,-7,0,-1,2,-2,-4,-9,-2,4,-1,5,4,-3,1,3,4,-1,5,8,3,4,2,1,1,1,7,4,0,-5,-11,-3,3,-3,-1,-2,0,-3,-2,-4,0,2,-3,7,4,1,0,-1,-6,5,3,5,3,-3,-3,9,10,5,11,9,10,2,-4,1,1,3,-4,-9,-6,-9,-7,-6,-7,-9,-11,-10,-12,-12,-12,-8,-12,-14,-9,-9,-12,-13,-14,-14,-12,-14,3,-14,-2,9,-11,1,-6,-1,-7,-12,-11,-8,-6,1,-1,6,7,2,-3,-8,-14,-13,-13,-13,-14,-13,-12,-7,-12,-14,-14,-14,-12,-13,-10,-9,-12,-14,-14,-13,-13,-14,-12,-14,-14,-14,-14,-14,-15,-12,-14,-14,-12,-13,-12,-12,-12,-14,-12,-13,-14,-13,-14,-11,-13,-12,-13,-3,-4,-10,6,-2,-8,-13,-13,-12,-13,-1,-13,-11,-10,-14,-14,-11,-14,-10,-12,-12,-11,-14,-9,-2,-5,-13,-7,1,-12,-9,-8,-10,-4,-3,-4,-10,0,-2,-5,-8,-5,-6,-11,-4,-3,-9,-5,-10,-13,-9,-5,-9,-8,-5,-4,-4,7,-4,-9,-9,-4,-13,-13,-13,-14,-14,-12,-11,-11,-13,-10,-10,-12,-14,-9,-12,-9,-13,-12,-5,-3,-6,-8,-1,-3,-2,-2,-7,-6,-7,-11,-10,-14,-13,-8,-11,-7,-7,-6,-4,-7,-10,-9,-6,-4,-12,-12,-12,-10,-8,-13,-11,-8,-10,-9,-4,-5,-5,-2,-3,-3,-8,-9,-10,-12,-12,-12,-13,-12,-11,-9,-10,-13,-12,-12,-13,-7,-8,-9,-5,-3,-13,-9,-11,-11,-12,-10,-13,-12,-12,-12,-12,-13,-14,-14,-11,-10,-10,-10,-13,-14,-13,-14,-13,-13,-12,-14,-13,-14,-11,-12,-11,-12,-6,-10,-9,-7,-14,-13,-14,-13,-13,2,5,-8,-14,-11,-12,4,-2,-11,-7,-3,-12,-9,-11,-13,-10,-4,-5,-5,-3,-6,-1,-2,-3,-5,-13,-10,-9,-5,-5,-3,3,2,-4,-11,-14,-14,-13,-12,-13,-11,-11,-13,-13,-11,-8,-5,-1,-2,-12,-13,-5,-1,-4,-3,-11,-6,-7,-7,-6,-8,-3,0,-7,-6,-6,-10,-7,-5,-10,0,-6,-10,-8,-2,-5,-10,-9,-12,-13,-13,-11,-11,-8,-10,-10,-9,-12,-10,-14,-11,-9,-11,-10,-8,-11,-12,1,-13,-14,-8,-12,-14,-13,-14,-13,-14,-14,-14,-14,-12,6,5,7,-1,-1,-2,-1,-12,-9,-13,-9,-12,-12,-6,-8,-5,-6,-9,-12,-1,15,-6,-11,-12,-11,-4,-13,-14,-14,-6,-5,-4,-5,-9,-2,-9,1,-8,0,-1,-10,-10,-10,-13,-13,-13,-13,-14,-14,-10,-4,-11,-13,-14,-14,-13,-8,-13,-12,-9,-13,-13,-10,-14,-9,-8,-13,-12,-12,-12,-14,-13,-13,-14,-14,-14,-13,-11,-13,-12,-13,-13,-13,-11,-12,-14,-14,-14,-14,-14,-14,-13,-12,-10,-14,-13,-10,-12,-10,-14,-15,-13,-13,-14,-7,-2,-3,-10,-12,-14,-11,-13,-14,-13,-13,-11,-11,-10,-14,-13,-11,-4,4,4,-2,-5,2,-10,-10,-3,-12,-6,-9,-12,-10,-11,-11,-8,-8,-12,-13,-14,-14,-14,-14,-9,-9,-6,-12,-13,-12,-14,-13,-11,-12,-11,-13,-11,-7,-8,4,5,4,8,7,11,12,10,5,13,4,3,0,-1,4,2,11,3,-9,-9,-1,0,4,5,4,6,10,9,9,6,2,1,0,-6,-4,-2,-2,-11,-9,-8,1,-5,-12,-12,-6,-7,-5,2,-11,-14,-9,14,-11,-8,13,-12,-3,13,-10,3,2,8,-12,7,13,-3,13,11,12,12,14,14,13,14,13,11,9,4,8,7,-5,7,0,-7,5,-6,-9,-3,-9,-11,-13,-14,-13,-14,-14,-12,-12,-11,-13,3,-12,-12,-9,-7,-1,-1,6,4,2,-3,4,2,2,2,2,2,1,-1,3,1,-1,2,3,3,6,3,2,3,3,6,9,3,7,8,3,-5,-1,2,3,5,8,6,3,8,2,7,7,3,-1,-6,-5,9,11,0,5,-1,-5,8,8,10,11,12,11,14,-9,14,-2,2,9,1,-7,8,8,9,10,3,0,3,7,11,8,7,8,-3,8,-7,-9,-13,1,-284,-14,-14,-12,-13,-13,-11,-11,-11,-10,-9,-8,-12,-12,-14,-14,-12,-14,-14,-14,-14,-15,-14,-14,-11,-7,-7,-7,-5,-4,-5,-8,-11,-14,-15,-14,-13,-9,-10,-13,-14,-14,-12,-13,-14,-14,-15,-14,-14,-14,-9,-5,-8,-2,-4,-12,-1,0,1,-1,-7,-10,-7,-4,2,8,-9,-12,-14,-8,-9,-12,-12,-11,-8,-7,-10,-13,-12,9,4,-2,-3,2,5,2,-3,-8,-8,-6,-6,-1,3,4,2,3,-4,-8,-2,5,7,5,-1,-8,-9,-4,4,4,-1,-10,-8,-8,-10,-12,-12,-7,-7,6,7,2,-10,-14,-15,-12,-9,-6,-6,-6,-11,-13,-10,-9,-9,-6,-6,-6,-9,-9,-12,-6,-11,2,-2,-3,-1,-5,2,-2,8,5,10,-1,-12,2,-6,-10,-4,5,6,2,1,2,-8,4,13,2,-5,-8,3,-8,-3,-7,-1,0,5,4,-5,-11,-7,-10,-7,-9,-1,1,-1,0,2],dlon:[-1195578,-5,4,-2,-4,9,16,16,17,14,15,7,-2,3,1,1,5,-10,1,11,11,4,3,0,12,5,9,1,16,18,-4,7,17,18,16,11,9,15,9,10,6,11,13,17,17,15,14,11,17,17,13,-3,-3,5,-7,1,14,12,12,-14,7,-8,3,3,18,17,13,17,17,9,13,16,17,16,13,14,13,13,16,15,18,17,14,7,-2,8,14,8,8,12,16,17,18,17,18,17,18,17,14,16,16,17,18,17,12,1,1,3,9,8,8,10,9,11,12,8,1,-1,9,2,6,10,16,17,17,12,9,2,-1,0,0,12,13,6,-9,6,17,16,2,-3,-7,-3,0,2,2,1,1,0,3,6,14,13,10,9,10,14,10,9,7,11,8,2,-1,-3,0,2,5,6,5,8,12,8,11,-3,-12,-5,3,5,-4,-9,-10,4,3,10,8,12,13,13,14,11,8,-9,9,15,17,17,11,12,9,12,17,17,18,17,15,12,12,11,10,15,14,16,17,16,17,18,17,18,16,15,16,16,18,17,18,18,18,18,17,17,15,16,17,17,18,17,16,17,13,14,17,18,18,17,17,13,18,18,18,18,18,16,16,16,18,13,14,13,12,10,8,8,10,10,10,12,12,15,10,9,7,10,11,2,8,3,3,5,4,6,6,7,8,0,6,9,5,8,1,15,5,4,8,11,9,7,11,7,7,11,14,7,6,5,2,8,10,6,3,5,5,5,-4,-2,-2,7,6,-5,-9,-1,-3,3,4,-6,-4,4,2,4,5,7,9,5,8,6,6,7,4,3,-7,-10,-5,-3,3,8,9,10,14,11,8,8,7,1,3,12,14,9,6,14,10,11,8,4,9,13,15,16,15,17,14,14,15,14,10,12,3,0,9,11,7,8,12,6,-2,14,10,16,11,-2,8,-4,14,13,13,4,12,13,11,14,15,14,15,16,14,14,12,8,10,11,6,5,16,17,17,14,17,17,16,15,11,16,17,9,7,13,13,14,7,11,13,16,14,11,17,5,7,5,6,11,7,-9,3,4,7,8,7,15,11,-4,2,-6,-8,-5,9,-2,4,14,4,7,3,9,13,12,10,4,5,-11,-15,-11,-8,-1,-5,9,14,2,10,12,13,2,7,16,17,8,15,8,11,17,18,15,5,10,2,3,3,3,4,4,9,14,17,13,-1,4,5,-7,9,4,12,8,1,-2,0,-6,15,4,16,17,11,13,9,4,10,12,7,11,9,15,3,3,15,4,10,11,3,4,-10,4,8,4,7,5,5,3,-5,-13,-16,-12,11,8,12,12,-2,14,15,9,1,0,4,11,1,6,2,6,3,4,4,2,1,1,-5,6,2,2,-3,2,8,4,15,11,12,13,14,11,14,5,12,8,7,8,8,12,13,9,16,17,5,11,6,5,4,-1,-1,1,5,1,4,3,4,4,5,10,3,-1,12,12,-1,10,16,15,10,12,3,8,7,8,15,1,4,8,14,16,13,5,-4,-5,5,9,-1,11,17,17,9,1,-5,8,11,12,1,1,-2,11,16,18,18,18,17,18,18,16,14,16,17,18,17,14,12,18,13,15,13,17,12,8,3,-2,13,17,17,7,2,11,11,15,18,17,6,10,16,17,16,15,14,14,17,4,6,1,-9,-3,2,4,10,10,8,12,12,8,16,15,17,17,13,16,17,17,9,6,4,7,14,7,0,8,1,1,4,8,9,13,12,5,12,8,7,14,14,17,1,10,7,3,-1,8,8,9,15,17,18,18,-15,-13,1,11,2,3,0,-5,-14,-11,-11,-12,-9,-9,-12,-13,-11,6,6,-6,-5,-14,-3,6,-6,-6,-9,2,3,6,16,10,11,-4,13,16,13,15,15,7,-4,-12,-11,-8,-13,2,7,11,7,14,7,11,6,-3,-5,7,-6,3,12,6,15,1,1,6,4,-1,-6,0,-2,1,-6,-1,-1,-14,-11,-7,1,11,10,14,13,17,16,17,12,-5,9,5,6,13,11,9,-3,1,-5,-8,-3,-6,-6,1,5,3,4,-5,-4,-4,-5,-5,-7,4,-7,-6,-12,-15,-17,-17,-17,-17,-13,-5,6,-14,-10,-11,-16,-13,-6,3,-6,-11,4,3,9,10,18,-8,-3,10,1,7,-15,1,-7,-10,3,-5,5,8,14,10,11,13,12,13,7,12,14,15,14,12,15,15,13,16,17,12,2,-8,-3,16,7,6,-6,12,15,15,14,12,9,11,16,17,16,11,10,16,11,11,5,9,6,3,7,8,6,10,7,7,7,-13,-5,2,4,10,12,13,13,5,6,6,10,7,10,9,3,6,4,-10,-6,3,2,-3,11,-8,-4,-3,-7,-2,-10,-12,-3,3,-1,-4,-12,-11,-5,3,-4,2,7,8,10,9,-3,3,-5,-7,-6,5,7,-4,-1,-3,-2,-1,-10,5,-6,-1,0,2,-7,-5,-8,-13,-2,7,12,1,4,1,-12,-13,4,0,-2,-6,10,5,9,12,12,5,10,14,7,15,12,17,-6,8,-4,3,4,-6,-10,-6,-5,2,4,-12,-11,5,-8,-16,2,6,4,-1,-14,-1,11,2,-14,5,12,5,6,12,0,-16,3,-9,-4,15,14,12,2,5,11,13,13,14,13,15,15,17,16,17,17,15,15,14,17,16,13,17,17,17,16,13,13,15,13,15,15,9,-7,0,12,14,18,16,16,15,17,11,8,11,10,7,11,15,16,17,15,12,12,8,5,0,1,3,14,10,10,-3,3,6,6,5,5,4,6,15,7,14,16,15,16,13,-3,17,16,18,17,15,8,14,15,15,17,17,12,16,17,16,15,14,13,16,16,17,16,17,15,15,16,17,18,13,16,14,14,16,17,12,16,17,15,9,12,5,15,13,10,16,10,10,14,16,8,9,5,11,4,-3,-2,10,15,8,14,1,8,15,14,16,17,15,9,1,12,-3,4,8,8,-1,-5,-9,-7,-6,-10,-9,-5,-2,-1,-7,-3,2,3,4,-7,-6,-4,-1,-2,-4,-5,-4,-1,2,3,16,0,6,16,12,14,10,12,13,13,15,14,14,8,12,14,17,16,11,12,14,9,11,11,9,8,12,12,7,12,4,10,11,10,11,17,16,8,2,13,3,15,17,4,6,8,15,-3,9,11,14,16,4,-4,6,11,7,-6,4,11,10,1,15,13,13,4,12,7,17,16,11,13,16,17,16,17,17,17,17,17,17,14,17,17,14,4,7,9,8,4,7,-1,7,5,9,4,4,8,6,10,7,3,-1,-5,-7,5,-1,-4,2,-8,-1,-2,-3,-1,0,6,3,10,7,9,9,7,12,10,3,13,11,4,7,14,12,9,6,9,11,17,9,13,16,17,17,6,15,15,14,17,17,16,18,16,12,18,14,18,15,17,16,18,17,16,18,16,13,16,17,14,17,16,17,14,16,16,16,7,14,18,16,18,16,12,16,14,11,13,5,10,9,-1,11,5,11,11,5,4,-2,1,9,7,11,5,12,9,4,8,14,15,18,17,6,16,13,16,13,12,14,14,14,8,10,9,7,6,7,5,0,7,10,9,5,-2,1,3,4,5,4,9,7,4,8,3,2,3,-1,-1,-3,1,3,3,5,15,18,14,5,-5,-5,-9,-7,-4,-8,-9,-11,-7,1,5,5,3,6,12,14,4,4,4,6,8,5,10,3,3,4,4,2,2,8,0,5,8,6,9,9,11,1,6,5,2,5,-1,-10,-8,0,3,17,11,4,12,10,4,-7,-7,-8,3,14,-3,10,12,4,1,9,5,12,8,1,4,-2,8,17,15,6,11,7,10,13,12,12,11,13,17,11,10,15,12,0,2,4,3,1,8,-6,6,0,2,11,15,13,13,13,17,17,14,12,13,6,13,6,6,0,-4,3,-6,-6,-11,-5,-6,-9,-1,1,-4,-8,-7,-2,-2,-14,-15,-13,-7,-13,-14,-13,-15,-10,-14,-13,-10,-7,-3,-5,2,-9,-11,-11,-14,-14,-14,-10,-10,-15,-16,-10,-8,-9,-5,-11,-9,-9,-12,-12,-13,11,16,15,15,15,14,14,12,9,3,8,9,3,4,6,13,12,4,10,10,5,11,10,9,14,15,-3,2,5,8,5,11,6,7,8,6,-3,-4,-3,2,-11,3,-9,1,2,-3,3,5,-5,2,7,5,6,1,10,6,11,9,11,12,12,13,5,4,1,-3,-6,-15,-16,-8,0,8,-5,-7,-11,-8,-9,-11,-7,-6,-11,-5,0,1,1,2,-3,-9,-16,-13,1,-2,-6,7,-6,-10,-11,-14,-14,-16,-15,-6,-1,1,5,10,7,11,10,5,7,10,13,15,9,5,2,1,15,16,0,6,-6,3,-3,-14,-17,-2,5,17,13,16,16,12,15,13,12,17,13,11,15,17,17,11,13,9,7,4,8,8,10,7,12,13,5,11,3,10,13,10,12,9,4,8,7,5,-1,2,0,-1,-3,2,-5,-1,-4,-5,-1,10,13,15,12,14,9,7,5,3,-5,-7,-8,3,-4,3,-5,-2,-2,-11,-7,-7,0,-5,-7,-9,-11,-8,4,1,2,-4,-3,-5,5,7,0,8,-8,0,-10,-6,-7,-12,1,-5,-8,-8,-7,-3,-1,-4,-15,-11,1,-4,0,-5,-11,5,3,-14,-5,0,10,5,0,-13,-9,-9,-9,-10,-3,-7,-6,-3,-1,0,8,10,6,6,0,-4,0,11,7,5,0,-1,1,1,-1,4,6,4,1,8,12,10,12,3,0,5,2,-4,10,15,13,9,8,0,10,2,6,0,-8,-11,-12,0,-2,-8,-12,14,17,17,14,10,17,-7,-11,2,-5,-9,9,10,-5,0,5,-15,-14,-10,-6,-3,-2,2,2,13,14,11,7,8,7,2,6,9,6,9,6,10,9,10,17,15,16,16,15,12,8,12,14,4,16,17,18,17,16,18,1,17,13,3,17,17,16,17,13,12,11,14,13,16,16,17,17,9,16,14,18,9,8,13,11,14,7,8,13,9,5,8,5,4,7,-1,7,7,-2,10,6,-4,10,0,3,1,8,5,-5,10,-6,0,1,-5,3,2,5,5,-6,-11,-14,-17,-5,10,17,12,1,-12,-17,-10,3,17,14,12,6,-4,-6,-2,-3,5,0,-1,5,-10,6,-5,11,13,18,13,-5,-3,4,13,-2,3,0,3,-1,2,8,5,2,7,7,3,3,6,7,13,16,17,15,15,14,10,12,12,12,-3,5,18,13,14,14,5,-9,3,-4,10,5,5,4,9,13,13,11,14,5,3,7,3,13,-7,-3,4,-6,1,7,-2,6,4,2,4,11,1,3,11,12,5,3,4,2,-8,14,14,6,16,15,-4,-13,3,-2,-1198,-6,3,8,7,6,6,-12,-6,-13,-14,-15,-9,-8,-7,4,8,4,5,5,3,1,4,6,11,15,16,15,17,17,17,16,9,2,1,-5,-2,7,13,7,3,5,8,7,6,2,-1,-1,-1,-6,0,16,7,18,17,5,18,18,18,18,13,13,16,17,17,15,13,10,0,-14,-6,-3,-6,11,15,16,13,4,10,9,9,18,17,18,16,18,18,14,15,16,17,17,18,18,17,18,16,15,17,17,15,17,17,15,14,17,16,17,18,13,14,16,12,11,7,15,14,16,15,18,11,-2,-2,6,14,16,17,16,11,7,13,14,15,16,16,16,15,14,9,8,11,16,18,18,17,17,17,14,9,5,14,4,-3,7,2,3,9,12,15,8,6,5,3,4,9,16,17,12,17,15,17,15,16,17,16,16,17,12,15,14,15,13,17,18,18,18,12]};
+const TPTS=(()=>{const la=[],lo=[];let a=0,o=0;for(let i=0;i<TRK.dlat.length;i++){a+=TRK.dlat[i];o+=TRK.dlon[i];la.push(a/1e4);lo.push(o/1e4);}return{la,lo};})();
+function snapToTrail(lat,lon){
+  const cosl=Math.cos(lat*Math.PI/180), R=3958.8, K=Math.PI/180;
+  let bi=0,bd=1e18;
+  for(let i=0;i<TPTS.la.length;i++){
+    const dy=(TPTS.la[i]-lat), dx=(TPTS.lo[i]-lon)*cosl, d=dy*dy+dx*dx;
+    if(d<bd){bd=d;bi=i;}
+  }
+  let bestT=bi*TRK.step, bestOff=Math.sqrt(bd)*K*R;
+  for(const j of [bi-1,bi]){
+    if(j<0||j+1>=TPTS.la.length) continue;
+    const ay=TPTS.la[j],ax=TPTS.lo[j]*cosl, by=TPTS.la[j+1],bx=TPTS.lo[j+1]*cosl;
+    const py=lat,px=lon*cosl;
+    const vy=by-ay,vx=bx-ax,L2=vx*vx+vy*vy; if(L2===0)continue;
+    let t=((px-ax)*vx+(py-ay)*vy)/L2; t=Math.max(0,Math.min(1,t));
+    const qy=ay+t*vy,qx=ax+t*vx;
+    const off=Math.hypot(py-qy,px-qx)*K*R;
+    if(off<bestOff){bestOff=off;bestT=(j+t)*TRK.step;}
+  }
+  return {mile:trk2nom(bestT), off:bestOff};
+}
+let gpsBusy=false;
+function doLocate(silent){
+  if(!navigator.geolocation){gpsMsg("GPS not available in this browser");return;}
+  if(gpsBusy)return; gpsBusy=true;
+  if(!silent) gpsMsg("locating… (can take up to a minute)");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    gpsBusy=false;
+    const s=snapToTrail(pos.coords.latitude,pos.coords.longitude);
+    state.lastFix={mile:Math.round(s.mile*10)/10,off:Math.round(s.off*10)/10,t:Date.now(),
+      lat:Math.round(pos.coords.latitude*1e5)/1e5,lon:Math.round(pos.coords.longitude*1e5)/1e5};
+    persist(); renderAll();
+  },err=>{
+    gpsBusy=false;
+    gpsMsg(err.code===1?"Location permission denied — enable in iOS Settings → Safari → Location":err.code===3?"GPS timed out — try again with a clearer sky view":"GPS unavailable right now");
+  },{enableHighAccuracy:true,timeout:45000,maximumAge:60000});
+}
+function gpsMsg(t){for(const id of ["gpsStatus","gpsStatus2"]){const el=document.getElementById(id);if(el)el.textContent=t;}}
+function maybeAutoLocate(){
+  const st=state.settings;
+  if(st.gps!=="on"||st.gpsMode!=="auto")return;
+  const age=state.lastFix?Date.now()-state.lastFix.t:1e15;
+  if(age>5*60*1000) doLocate(true);
+}
+
+// ---------------- backup & snapshots ----------------
+const SNAPKEY="jmt_full_snaps";
+function readSnaps(){try{const r=localStorage.getItem(SNAPKEY);return r?JSON.parse(r):[];}catch(e){return [];}}
+function writeSnaps(a){try{localStorage.setItem(SNAPKEY,JSON.stringify(a));}catch(e){}}
+function snapshotNow(label){
+  const d={...state}; delete d.qr;
+  const a=readSnaps();
+  a.unshift({t:Date.now(),label:label||"auto",n:Object.keys(d.actuals||{}).length,data:d});
+  writeSnaps(a.slice(0,7));
+}
+function maybeAutoSnapshot(){
+  if(!Object.keys(state.actuals||{}).length) return;
+  const a=readSnaps();
+  if(!a.length||new Date(a[0].t).toDateString()!==new Date().toDateString()) snapshotNow("auto");
+}
+function backupPayload(){
+  const d={...state}; delete d.qr;
+  return "NATCHO1:"+JSON.stringify({v:APP_VERSION,t:Date.now(),data:d});
+}
+function parseBackup(txt){
+  try{
+    const m=(txt||"").trim();
+    const j=JSON.parse(m.startsWith("NATCHO1:")?m.slice(8):m);
+    const d=j&&j.data?j.data:j;
+    if(!d||!d.settings||!d.actuals) return null;
+    return d;
+  }catch(e){return null;}
+}
+function recordExport(){state.lastExport=Date.now();persist();renderAll();}
+function backupDue(){
+  const days=num(state.settings.backupDays);
+  if(days===null||days<=0) return false;
+  if(!Object.keys(state.actuals||{}).length) return false;
+  return Date.now()-(state.lastExport||0)>=days*86400000;
+}
+async function shareBackup(){
+  const txt=backupPayload();
+  const ta=document.getElementById("bkText"); if(ta) ta.value=txt;
+  try{ if(navigator.share){ await navigator.share({title:"Natcho backup "+new Date().toLocaleDateString(),text:txt}); recordExport(); return; } }
+  catch(e){ if(e&&e.name==="AbortError") return; }
+  copyBackup();
+}
+async function copyBackup(){
+  const txt=backupPayload();
+  const ta=document.getElementById("bkText"); if(ta) ta.value=txt;
+  try{ await navigator.clipboard.writeText(txt); flashSave("backup copied"); recordExport(); }
+  catch(e){ flashSave("select & copy the text box"); }
+}
+function importBackup(){
+  const ta=document.getElementById("bkText");
+  const d=parseBackup(ta?ta.value:"");
+  if(!d){ flashSave("not a valid Natcho backup"); return; }
+  const n=Object.keys(d.actuals||{}).length;
+  if(!confirm("Replace ALL current data with this backup ("+n+" logged day"+(n===1?"":"s")+")? A pre-import snapshot will be kept.")) return;
+  snapshotNow("pre-import");
+  state=d; normalize(state);
+  persist(); renderAll(); flashSave("backup restored");
+}
+
+// ---------------- interval utilities ----------------
+function ivMerge(list){
+  const s=list.filter(x=>x[1]-x[0]>1e-6).sort((a,b)=>a[0]-b[0]);
+  const out=[];
+  for(const iv of s){
+    if(out.length&&iv[0]<=out[out.length-1][1]+1e-6) out[out.length-1][1]=Math.max(out[out.length-1][1],iv[1]);
+    else out.push([iv[0],iv[1]]);
+  }
+  return out;
+}
+function ivSubtract(base,subs){
+  let cur=base.map(x=>[x[0],x[1]]);
+  for(const s of ivMerge(subs)){
+    const nxt=[];
+    for(const b of cur){
+      if(s[1]<=b[0]+1e-6||s[0]>=b[1]-1e-6){nxt.push(b);continue;}
+      if(s[0]>b[0]+1e-6) nxt.push([b[0],s[0]]);
+      if(s[1]<b[1]-1e-6) nxt.push([s[1],b[1]]);
+    }
+    cur=nxt;
+  }
+  return cur;
+}
+const ivLen=l=>l.reduce((s,x)=>s+(x[1]-x[0]),0);
+const segIv=g=>[Math.min(g.a,g.b),Math.max(g.a,g.b)];
+
+// ---------------- legs + quests ----------------
+function activeQuests(){
+  if(state.settings.questsOn!==true) return [];
+  const out=[];
+  for(const q of QUESTS){ if(state.questSel[q.id]) out.push({...q}); }
+  (state.customQuests||[]).forEach((c,i)=>{
+    const at=num(c.at),mi=num(c.mi),g=num(c.gain)||0;
+    if(at!==null&&mi!==null&&mi>0) out.push({id:"c"+i,name:c.name||"Side quest",at,mi,gain:Math.max(0,g)});
+  });
+  return out;
+}
+function buildLegs(){
+  const st=state.settings;
+  let from=st.start, sign=st.dir==="SOBO"?-1:1;
+  const legs=[]; const issues=[];
+  const rcs=st.legsOn?(state.routeChanges||[]):[];
+  rcs.forEach((rc,i)=>{
+    const at=num(rc.at), to=num(rc.to);
+    if(at===null||to===null){issues.push("Change "+(i+1)+": incomplete");return;}
+    if(at<0||at>237.9||to<0||to>237.9){issues.push("Change "+(i+1)+": mile outside the trail (0–237.9)");return;}
+    if((at-from)*sign<=1e-9){issues.push("Change "+(i+1)+": mi "+at+" not ahead on current leg");return;}
+    legs.push({from,to:at,sign,travelAfter:rc.travel!==false});
+    from=to; sign=rc.dir==="SOBO"?-1:1;
+  });
+  if(Math.abs(st.end-from)>1e-9) legs.push({from,to:st.end,sign:(st.end-from)>=0?1:-1,travelAfter:false});
+  if(!legs.length) legs.push({from:st.start,to:st.end,sign:st.end>=st.start?1:-1,travelAfter:false});
+  return {legs,issues};
+}
+function newCursor(legs){return {li:0,pos:legs[0].from,cum:0,bonus:0,bonusName:"",qHit:{},travel:null,done:false,jump:null};}
+function advance(cur,miles,legs,quests){
+  const segs=[];
+  if(cur.travel){const t=cur.travel;cur.travel=null;return {segs,travel:t};}
+  let m=miles;
+  while(m>1e-9&&!cur.done){
+    if(cur.bonus>1e-9){
+      const w=Math.min(m,cur.bonus);
+      const p0=(cur.bonusTotal||0)-cur.bonus;
+      cur.bonus-=w; cur.cum+=w; m-=w;
+      segs.push({quest:cur.bonusName,mi:w,p0,p1:p0+w,qt:cur.bonusTotal||0,qg:cur.bonusGain||0});
+      continue;
+    }
+    const leg=legs[cur.li];
+    const remain=Math.abs(leg.to-cur.pos);
+    let w=Math.min(m,remain);
+    let qa=null;
+    for(const q of quests){
+      if(cur.qHit[q.id]) continue;
+      const d=(q.at-cur.pos)*leg.sign;
+      if(d>=-1e-9&&d<=w+1e-9){ if(qa===null||d<qa.d) qa={q,d}; }
+    }
+    if(qa){
+      const w1=Math.max(0,qa.d);
+      if(w1>1e-9){segs.push({a:cur.pos,b:cur.pos+leg.sign*w1,sign:leg.sign,mi:w1});cur.pos+=leg.sign*w1;cur.cum+=w1;m-=w1;}
+      cur.qHit[qa.q.id]=1; cur.bonus=qa.q.mi; cur.bonusName=qa.q.name; cur.bonusTotal=qa.q.mi; cur.bonusGain=qa.q.gain;
+      continue;
+    }
+    if(w>1e-9){segs.push({a:cur.pos,b:cur.pos+leg.sign*w,sign:leg.sign,mi:w});cur.pos+=leg.sign*w;cur.cum+=w;m-=w;}
+    if(Math.abs(leg.to-cur.pos)<=1e-9){
+      if(cur.li+1<legs.length){
+        const jump={from:leg.to,to:legs[cur.li+1].from};
+        cur.li++; cur.pos=legs[cur.li].from; cur.jump=jump;
+        if(leg.travelAfter) cur.travel=jump;
+        m=0;
+      } else cur.done=true;
+    }
+  }
+  return {segs,travel:null};
+}
+
+// ---------------- engine ----------------
+function compute(){
+  const st=state.settings;
+  const {legs,issues}=buildLegs();
+  const quests=activeQuests();
+  const totalTrail=legs.reduce((s,l)=>s+Math.abs(l.to-l.from),0);
+  const totalPlanned=totalTrail+quests.reduce((s,q)=>s+q.mi,0);
+  const pace=(()=>{const p=num(state.pace);return p!==null&&p>0?p:15;})();
+  let lastEntered=0;
+  for(const k in state.actuals){const d=parseInt(k,10);if(state.actuals[k]&&num(state.actuals[k].v)!==null&&d>lastEntered)lastEntered=d;}
+  const planC=newCursor(legs), projC=newCursor(legs);
+  const rows=[]; let day=0; let finishETA=null;
+  const stoneMap={};
+  const MAIN_END=219.2, CW_ATTACH=200.5;
+  const mapEnd=e=>e>MAIN_END+1e-6?CW_ATTACH:e;
+  const rawMin=Math.min(...legs.map(l=>Math.min(l.from,l.to)));
+  const rawMax=Math.max(...legs.map(l=>Math.max(l.from,l.to)));
+  const envMin=Math.min(...legs.map(l=>Math.min(mapEnd(l.from),mapEnd(l.to))));
+  const envMax=Math.max(...legs.map(l=>Math.max(mapEnd(l.from),mapEnd(l.to))));
+  for(const w of WPTS){
+    if((w[2].includes("R")||w[2].includes("M"))&&w[0]>=envMin-1e-9&&w[0]<=envMax+1e-9)
+      stoneMap[w[0]]={name:w[1],mile:w[0],planDate:null,eta:null,etaCum:null};
+  }
+  const markStones=(segs,date,key,cumBase)=>{
+    let c=cumBase;
+    for(const g of segs){
+      if(g.quest){c+=g.mi;continue;}
+      const lo=Math.min(g.a,g.b),hi=Math.max(g.a,g.b);
+      for(const mKey in stoneMap){
+        const sn=stoneMap[mKey];
+        if(sn[key]===null&&sn.mile>=lo-1e-9&&sn.mile<=hi+1e-9){
+          sn[key]=date;
+          if(key==="eta") sn.etaCum=c+Math.abs(sn.mile-g.a);
+        }
+      }
+      c+=g.mi;
+    }
+  };
+  while(day<400&&(!planC.done||!projC.done||day<lastEntered)){
+    day++;
+    const date=dateForDay(day);
+    const def=planC.travel?0:Math.round(Math.min(pace,Math.max(0,totalPlanned-planC.cum))*10)/10;
+    const pOv=num(state.planned[day]); const pm=(pOv!==null&&pOv>=0)?pOv:def;
+    const planDoneStart=planC.done, projDoneStart=projC.done;
+    const planPos0=planC.pos, projPos0=projC.pos;
+    const planCumBase=planC.cum, projCumBase=projC.cum;
+    const pAdv=advance(planC,pm,legs,quests);
+    // projected
+    const ent=state.actuals[day];
+    const raw=ent?num(ent.v):null;
+    const mode=ent&&ent.m?ent.m:(st.logMode||"mi");
+    let am=null;
+    if(raw!==null){
+      if(mode==="pct"){
+        if(projC.travel) projC.travel=null;
+        if(projC.bonus>1e-9) projC.bonus=0;
+        const leg=legs[Math.min(projC.li,legs.length-1)];
+        am=(raw-projC.pos)*leg.sign;
+      } else am=raw;
+    }
+    const has=am!==null&&isFinite(am);
+    let jAdv;
+    if(has){ if(projC.travel) projC.travel=null; jAdv=advance(projC,Math.max(am,0),legs,quests); }
+    else jAdv=advance(projC,(pOv!==null&&pOv>=0)?pOv:Math.round(Math.min(pace,Math.max(0,totalPlanned-projC.cum))*10)/10,legs,quests);
+    markStones(pAdv.segs,date,"planDate",planCumBase);
+    markStones(jAdv.segs,date,"eta",projCumBase);
+    if(finishETA===null&&projC.done&&!projDoneStart) finishETA=date;
+    rows.push({d:day,date,def,rawPm:pm,
+      actualMi:has?am:null,entryMode:mode,rawV:ent?ent.v:"",
+      plan:{segs:pAdv.segs,travel:pAdv.travel,pos:planC.pos,pos0:planPos0,cum:planC.cum,doneStart:planDoneStart,li:planC.li},
+      proj:{segs:jAdv.segs,travel:jAdv.travel,pos:projC.pos,pos0:projPos0,cum:projC.cum,doneStart:projDoneStart,li:projC.li},
+      variance:projC.cum-planC.cum});
+  }
+  // current status
+  const cur=lastEntered===0?{pos:legs[0].from,cum:0,variance:0,li:0}
+    :{pos:rows[lastEntered-1].proj.pos,cum:rows[lastEntered-1].proj.cum,variance:rows[lastEntered-1].variance,li:rows[lastEntered-1].proj.li};
+  // coverage ledger from entered days
+  const walked=[];
+  for(let i=0;i<lastEntered&&i<rows.length;i++) for(const g of rows[i].proj.segs) if(!g.quest) walked.push(segIv(g));
+  const ledger=ivMerge(walked);
+  // future planned coverage
+  const future=[];
+  for(let i=lastEntered;i<rows.length;i++) for(const g of rows[i].proj.segs) if(!g.quest) future.push(segIv(g));
+  const red=ivSubtract(ivSubtract([[envMin,envMax]],ledger),future);
+  const uniqueDone=ivLen(ledger);
+  const stones=Object.values(stoneMap).sort((a,b)=>(a.etaCum===null?1e18:a.etaCum)-(b.etaCum===null?1e18:b.etaCum));
+  for(const sn of stones){
+    sn.reached=ledger.some(iv=>sn.mile>=iv[0]-1e-6&&sn.mile<=iv[1]+1e-6);
+    sn.away=sn.etaCum===null?null:Math.max(0,sn.etaCum-cur.cum);
+  }
+  const next=stones.find(s=>!s.reached&&s.away!==null&&s.away>1e-6);
+  return {st,legs,issues,quests,totalTrail,totalPlanned,rows,cur,lastEntered,
+    ledger,red,envMin:rawMin,envMax:rawMax,uniqueDone,totalWalked:cur.cum,stones,next,finishETA,pace};
+}
+
+// ---------------- per-day derivations for a view ----------------
+const WARN_RE=/dry|tank up|hot|exposed|snow|ford|washout|poison oak|routefinding|blowdown|no reliable|mosquito/i;
+function crossSeg(segs){
+  const cent=[]; let half=false, term=false, high=false;
+  for(const g of segs){
+    if(g.quest) continue;
+    const lo=Math.min(g.a,g.b),hi=Math.max(g.a,g.b);
+    for(let k=Math.ceil((lo+1e-9)/50)*50;k<=hi+1e-9;k+=50){ if(k>=50&&k<=200) cent.push(k); }
+    if(lo<104.4&&104.4<=hi+1e-9) half=true;
+    if(lo<=208.7+1e-9&&208.7<=hi+1e-9) high=true;
+    if(lo<=1e-6) term=true;
+  }
+  return {cent:[...new Set(cent)],half,term,high};
+}
+function viewDay(r,view,m){
+  const v=r[view];
+  const out={travel:v.travel,segs:v.segs,pos:v.pos,pos0:v.pos0!==undefined?v.pos0:v.pos,doneStart:v.doneStart};
+  if(v.travel){
+    out.loc="Travel day — jump to "+wname(v.travel.to);
+    out.rel=""; out.note=""; out.gl={up:0,down:0}; out.passes=[]; out.bigPasses=[]; out.x={cent:[],half:false,term:false,high:false};
+    out.miles=0; out.questName="";
+    return out;
+  }
+  let up=0,down=0,miles=0,questMi=0,questName="";
+  const passes=[],bigPasses=[];
+  for(const g of v.segs){
+    miles+=g.mi;
+    if(g.quest){
+      questMi+=g.mi; questName=g.quest;
+      const half=(g.qt||0)/2;
+      if(half>0){
+        up+=(g.qg||0)*Math.max(0,Math.min(g.p1,half)-Math.min(g.p0,half))/half;
+        down+=(g.qg||0)*Math.max(0,g.p1-Math.max(g.p0,half))/half;
+      }
+      continue;
+    }
+    const gl=gainLoss(g.a,g.b); up+=gl.up; down+=gl.down;
+    const lo=Math.min(g.a,g.b),hi=Math.max(g.a,g.b);
+    for(const w of WPTS){
+      if(w[2].includes("R")&&w[0]>lo+1e-9&&w[0]<=hi+1e-9) passes.push(w[1]);
+      if(w[2].includes("P")&&w[0]>lo+1e-9&&w[0]<=hi+1e-9) bigPasses.push(w[1]+" ("+Math.round(eleAtMile(w[0])).toLocaleString()+" ft)");
+    }
+  }
+  out.gl={up:Math.round(up),down:Math.round(down)}; out.passes=passes; out.bigPasses=bigPasses; out.miles=miles;
+  out.x=crossSeg(v.segs); out.questName=questName;
+  const endPos=v.pos;
+  if(questMi>0&&questMi>=miles-1e-6){ out.loc=questName+" (side quest)"; out.rel=""; out.note=""; }
+  else{
+    const sg=segFor(endPos);
+    out.loc=sg[1]; out.note=sg[2];
+    // relative phrase using leg direction
+    const leg=m.legs[Math.min(v.li,m.legs.length-1)];
+    let prev=null,nextW=null;
+    const sorted=[...WPTS].sort((a,b)=>(a[0]-b[0])*leg.sign);
+    for(const w of sorted){ const dd=(w[0]-endPos)*leg.sign; if(dd<=1e-9)prev=w; else {nextW=w;break;} }
+    if(nextW&&prev&&Math.abs(nextW[0]-endPos)<Math.abs(endPos-prev[0])) out.rel=fmtMi(Math.abs(nextW[0]-endPos))+" mi before "+nextW[1];
+    else if(prev) out.rel=Math.abs(endPos-prev[0])<0.05?prev[1]:prev[1]+" + "+fmtMi(Math.abs(endPos-prev[0]))+" mi";
+    else out.rel="";
+  }
+  return out;
+}
+function mkBadges(x,q){
+  let h="";
+  for(const k of x.cent) h+='<span class="mk">MILE '+k.toLocaleString()+'</span>';
+  if(x.half) h+='<span class="mk gold">⭐ JMT HALFWAY</span>';
+  if(x.high) h+='<span class="mk gold">▲ WHITNEY — HIGH POINT</span>';
+  if(x.term) h+='<span class="mk gold">🏁 TERMINUS</span>';
+  if(q) h+='<span class="mk quest">⚔ SIDE QUEST</span>';
+  return h;
+}
+function cardTint(x,hasResupply,warnNote,travel,quest){
+  if(state.settings.colors===false) return "";
+  if(travel) return " bg-travel";
+  if(x.term||x.half||x.high) return " bg-gold";
+  if(quest) return " bg-quest";
+  if(warnNote&&WARN_RE.test(warnNote)) return " bg-warn";
+  if(x.cent.length) return " bg-cent";
+  if(hasResupply) return " bg-res";
+  return "";
+}
+
+// ---------------- renders ----------------
+function renderHeader(m){
+  document.getElementById("tripLine").textContent="JMT "+(m.legs[0].sign>0?"SOBO":"NOBO")+(m.legs.length>1?" · "+m.legs.length+" LEGS":"")+" · "+wname(m.st.start).split("—")[0].split("/")[0].trim()+" → "+wname(m.st.end).split("—")[0].split("/")[0].trim();
+  document.getElementById("curMile").textContent=fmtMi(m.cur.pos);
+  const v=m.cur.variance, chip=document.getElementById("varChip");
+  chip.textContent=m.lastEntered===0?"no days logged yet":Math.abs(v)<0.05?"on plan":fmtMi(Math.abs(v))+" mi "+(v>0?"ahead":"behind");
+  chip.style.background=m.lastEntered===0?"#3d5245":v>=0?"var(--trail)":"var(--blaze)";
+  let doneTxt=fmtMi(m.uniqueDone)+" mi done";
+  if(m.totalWalked>m.uniqueDone+0.1) doneTxt=fmtMi(m.uniqueDone)+" unique · "+fmtMi(m.totalWalked)+" walked";
+  document.getElementById("stat1").textContent=doneTxt+" · "+fmtMi(Math.max(0,m.totalPlanned-m.totalWalked))+" to go of "+fmtMi(m.totalPlanned);
+  document.getElementById("stat2").textContent="Finish ETA: "+(m.finishETA?fmtDate(m.finishETA):"—");
+  document.getElementById("nextLine").textContent=m.next?("NEXT: "+m.next.name+" · "+fmtMi(m.next.away)+" mi · ETA "+(m.next.eta?fmtDate(m.next.eta):"—")):"Route complete!";
+  // ribbon: geographic axis with covered/red/future
+  const W=340,pad=6,dom=Math.max(1,m.envMax-m.envMin);
+  const x=mi=>pad+((Math.max(m.envMin,Math.min(mi,m.envMax))-m.envMin)/dom)*(W-2*pad);
+  const N=140,es=[];
+  for(let i=0;i<=N;i++) es.push(eleAtMile(m.envMin+dom*i/N));
+  const t0=nom2trk(m.envMin),t1=nom2trk(m.envMax);
+  let hiTrue=-1e9;for(let i=Math.max(0,Math.floor(t0/ELE.step));i<=Math.min(ELE.e.length-1,Math.ceil(t1/ELE.step));i++) if(ELE.e[i]>hiTrue)hiTrue=ELE.e[i];
+  const lo=Math.min(...es),hi=Math.max(...es),span=Math.max(200,hi-lo);
+  const y=e=>46-((e-lo)/span)*34;
+  const pathFor=(m0,m1)=>{let p="";for(let i=0;i<=N;i++){const mm=m.envMin+dom*i/N;if(mm<m0-dom/N||mm>m1+dom/N)continue;p+=(p?" L":"M")+x(mm).toFixed(1)+" "+y(es[i]).toFixed(1);}return p;};
+  let svg='<path d="'+pathFor(m.envMin,m.envMax)+'" fill="none" stroke="#5c6f60" stroke-width="1.6"/>';
+  for(const iv of m.red) svg+='<path d="'+pathFor(iv[0],iv[1])+'" fill="none" stroke="#C24B27" stroke-width="2.4"/>';
+  for(const iv of m.ledger) svg+='<path d="'+pathFor(iv[0],iv[1])+'" fill="none" stroke="#E8A33D" stroke-width="2.4"/>';
+  for(const sn of m.stones) svg+='<line x1="'+x(sn.mile)+'" y1="52" x2="'+x(sn.mile)+'" y2="58" stroke="'+(sn.reached?"#E8A33D":"#7d8a7d")+'" stroke-width="1"/>';
+  svg+='<circle cx="'+x(m.cur.pos)+'" cy="'+y(eleAtMile(m.cur.pos))+'" r="4.5" fill="#E8A33D" stroke="#16241B" stroke-width="2"/>';
+  svg+='<text x="'+pad+'" y="9" fill="#9fb0a2" font-size="9">mi '+fmtMi(m.envMin)+'</text>';
+  svg+='<text x="'+(W-pad)+'" y="9" fill="#9fb0a2" font-size="9" text-anchor="end">mi '+fmtMi(m.envMax)+' · peak '+Math.round(hiTrue).toLocaleString()+' ft</text>';
+  svg+='<text x="'+Math.min(Math.max(x(m.cur.pos),28),W-34)+'" y="64" fill="#E8A33D" font-size="10" text-anchor="middle">'+(Math.round(m.cur.pos*10)/10)+'</text>';
+  document.getElementById("ribbon").innerHTML=svg;
+}
+const tDayOf=()=>todayDayNum();
+function travelCard(r,vd,tDay){
+  return '<div class="card bg-travel'+(r.d===tDay?' today':'')+'" style="text-align:center">'
+    +'<div class="daynum" style="color:#4a6584">DAY '+r.d+' · TRAVEL DAY</div>'
+    +'<div class="sub">'+fmtDate(r.date)+' — jump '+esc(wname(vd.travel.from))+' → '+esc(wname(vd.travel.to))+'</div></div>';
+}
+function renderLog(m){
+  const tDay=tDayOf();
+  let html="",doneShown=false;
+  for(const r of m.rows){
+    const vd=viewDay(r,"proj",m);
+    if(vd.doneStart&&!vd.travel&&vd.miles<1e-9&&r.actualMi===null){
+      if(!doneShown){html+='<div class="card" style="text-align:center;border-color:var(--trail)"><div class="daynum" style="font-size:20px">ROUTE COMPLETE</div><div class="sub">Projected finish: day '+(r.d-1)+' · '+fmtDate(dateForDay(r.d-1))+'</div></div>';doneShown=true;}
+      continue;
+    }
+    if(vd.travel){html+=travelCard(r,vd,tDay);continue;}
+    const logged=r.actualMi!==null;
+    const varTxt=logged&&Math.abs(r.variance)>=0.05?' · <span class="'+(r.variance>0?"pos":"neg")+'">'+(r.variance>0?"+":"")+fmtMi(r.variance)+' vs plan</span>':"";
+    const glTxt=' · ↑'+vd.gl.up.toLocaleString()+' ↓'+vd.gl.down.toLocaleString()+' ft';
+    const bits=[];
+    if(r.d===1) bits.push('<b>🥾 Depart '+esc(wname(m.st.start))+' (mi '+fmtMi(m.st.start)+')</b>');
+    if(vd.rel) bits.push(esc("📍 "+vd.rel));
+    if(vd.questName){const q=activeQuests().find(x=>x.name===vd.questName); if(q&&q.alt) bits.push('<b>⛰ '+esc(q.name)+' — summit '+q.alt.toLocaleString()+' ft</b>');}
+    if(vd.bigPasses.length) bits.push('<b>⛰ '+esc(vd.bigPasses.join(" · "))+'</b>');
+    if(vd.note) bits.push(esc(vd.note));
+    if(vd.passes.length) bits.push('<b style="color:var(--trail)">🛒 Resupply: '+esc(vd.passes.join(" · "))+'</b>');
+    const note=bits.length?'<div class="note">'+bits.join(" — ")+'</div>':"";
+    html+='<div class="card'+(r.d===tDay?' today':'')+cardTint(vd.x,vd.passes.length>0,vd.note,false,!!vd.questName)+'" data-day="'+r.d+'" data-dview="proj"><div class="rowtop">'
+      +'<div class="daycol"><div class="daynum">DAY '+r.d+'</div><div class="daydate">'+fmtDate(r.date)+(r.d===tDay?' · TODAY':'')+'</div></div>'
+      +'<div class="mid"><div class="loc">'+esc(vd.loc)+mkBadges(vd.x,vd.questName)+'</div><div class="sub">'+(logged?'walked '+fmtMi(r.actualMi):'plan '+fmtMi(vd.miles))+' mi · JMT mi <span class="mono">'+fmtMi(vd.pos0)+' → '+fmtMi(vd.pos)+'</span>'+glTxt+varTxt+'</div></div>'
+      +'<div class="iw"><input inputmode="decimal" placeholder="'+(r.entryMode==="pct"?fmtMi(vd.pos):fmtMi(vd.miles||r.rawPm))+'" value="'+esc(r.rawV)+'" data-actual="'+r.d+'" data-mode="'+r.entryMode+'" class="'+(logged?'filled':'')+'"><button class="ilbl" data-modetoggle="'+r.d+'">'+(r.entryMode==="pct"?"pct mile ⇄":"actual mi ⇄")+'</button></div>'
+      +'</div>'+note+'</div>';
+  }
+  document.getElementById("logList").innerHTML=html;
+}
+function renderStones(m){
+  document.getElementById("stoneList").innerHTML=m.stones.map(s=>{
+    const shift=s.planDate&&s.eta?Math.round((s.eta-s.planDate)/86400000):0;
+    const shiftTxt=shift!==0&&s.eta?' <span class="'+(shift<0?"pos":"neg")+'">('+(shift>0?"+":"")+shift+" day"+(Math.abs(shift)===1?"":"s")+')</span>':"";
+    return '<div class="card'+(s.reached?' done':'')+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div class="loc">'+(s.reached?"✓ ":"")+esc(s.name)+'</div><div class="mono" style="font-size:13px;color:var(--muted);white-space:nowrap">mi '+fmtMi(s.mile)+' · '+Math.round(eleAtMile(s.mile)).toLocaleString()+' ft</div></div>'
+      +'<div class="sub">'+(s.reached?"Reached":s.away!==null?fmtMi(s.away)+" mi away":"not on remaining route")+' · plan '+(s.planDate?fmtDate(s.planDate):"—")+' · ETA <b>'+(s.eta?fmtDate(s.eta):"—")+'</b>'+shiftTxt+'</div></div>';
+  }).join("");
+}
+function renderPlan(m){
+  let html="";
+  for(const r of m.rows){
+    const vd=viewDay(r,"plan",m);
+    if(vd.doneStart&&!vd.travel&&vd.miles<1e-9){
+      html+='<div class="card" style="text-align:center;border-color:var(--trail)"><div class="daynum" style="font-size:18px">PLAN COMPLETE</div><div class="sub">Day '+(r.d-1)+' · '+fmtDate(dateForDay(r.d-1))+' at this pace</div></div>';
+      break;
+    }
+    if(vd.travel){html+=travelCard(r,vd,-1);continue;}
+    const pps=[];
+    if(r.d===1) pps.push('<b>🥾 Depart '+esc(wname(m.st.start))+' (mi '+fmtMi(m.st.start)+')</b>');
+    if(vd.bigPasses.length) pps.push('<b>⛰ '+esc(vd.bigPasses.join(" · "))+'</b>');
+    if(vd.passes.length) pps.push('<b style="color:var(--trail)">🛒 '+esc(vd.passes.join(" · "))+'</b>');
+    const noteHtml=pps.length?'<div class="note" style="margin-top:5px;padding-top:5px">'+pps.join(" — ")+'</div>':"";
+    const a=vd.pos0;
+    html+='<div class="card'+cardTint(vd.x,vd.passes.length>0,vd.note,false,!!vd.questName)+'" data-day="'+r.d+'" data-dview="plan" style="display:flex;align-items:center;gap:10px">'
+      +'<div class="daycol" style="width:74px"><div class="daynum">DAY '+r.d+'</div><div class="daydate">'+fmtDate(r.date)+'</div></div>'
+      +'<div class="mid"><div class="sub ellip">'+esc(vd.loc)+mkBadges(vd.x,vd.questName)+'</div><div class="mono" style="font-size:12px;color:var(--muted)">JMT mi '+fmtMi(a)+' → '+fmtMi(vd.pos)+' · ↑'+vd.gl.up.toLocaleString()+' ↓'+vd.gl.down.toLocaleString()+' ft</div>'+noteHtml+'</div>'
+      +'<div class="iw"><input inputmode="decimal" placeholder="'+fmtMi(r.def)+'" value="'+(state.planned[r.d]??"")+'" data-plan="'+r.d+'"><div class="ilbl">predicted mi</div></div>'
+      +'</div>';
+  }
+  document.getElementById("planList").innerHTML=html;
+}
+function renderSetup(m){
+  const st=state.settings;
+  const T=(id,on)=>{const e=document.getElementById(id);if(e)e.classList.toggle("on",on);};
+  T("dirNOBO",st.dir==="NOBO");T("dirSOBO",st.dir==="SOBO");
+  T("gpsOn",st.gps==="on");T("gpsOff",st.gps!=="on");
+  T("gpsMan",st.gpsMode!=="auto");T("gpsAuto",st.gpsMode==="auto");
+  T("logMi",st.logMode!=="pct");T("logPct",st.logMode==="pct");
+  T("dpOn",st.dayPeek!=="off");T("dpOff",st.dayPeek==="off");
+  T("colOn",st.colors!==false);T("colOff",st.colors===false);
+  T("legsOn2",st.legsOn===true);T("legsOff2",st.legsOn!==true);
+  T("qOn",st.questsOn===true);T("qOff",st.questsOn!==true);
+  const opts=(sel,chosen)=>{
+    const ths=st.dir==="NOBO"?TRAILHEADS:[...TRAILHEADS].reverse();
+    sel.innerHTML=ths.map(w=>'<option value="'+w[0]+'"'+(Math.abs(w[0]-chosen)<0.05?' selected':'')+'>'+esc(w[1])+' — mi '+w[0]+'</option>').join("");
+  };
+  opts(document.getElementById("startSel"),st.start);
+  opts(document.getElementById("endSel"),st.end);
+  const di=document.getElementById("dateInput"); if(di&&document.activeElement!==di) di.value=st.date||"";
+  document.getElementById("setupSummary").textContent=fmtMi(m.totalPlanned)+" planned miles ("+m.legs.length+" leg"+(m.legs.length===1?"":"s")+(m.quests.length?", "+m.quests.length+" side quest"+(m.quests.length===1?"":"s"):"")+") · at "+m.pace+" mi/day ≈ "+Math.ceil(m.totalPlanned/m.pace)+" days"+(m.issues.length?" · ⚠ "+m.issues.join("; "):"");
+  // route changes editor
+  const rcHost=document.getElementById("rcEditor");
+  if(rcHost){
+    rcHost.style.display=st.legsOn?"block":"none";
+    if(st.legsOn){
+      const thOpts=v=>TRAILHEADS.map(w=>'<option value="'+w[0]+'"'+(Math.abs(w[0]-v)<0.05?' selected':'')+'>'+esc(w[1])+' — mi '+w[0]+'</option>').join("");
+      document.getElementById("rcList").innerHTML=(state.routeChanges||[]).map((rc,i)=>
+        '<div class="card" style="padding:8px 10px">'
+        +'<div class="sub" style="margin:0 0 6px"><b>Change '+(i+1)+'</b> <button class="ilbl" data-rcdel="'+i+'" style="width:auto;float:right;color:var(--blaze)">remove ✕</button></div>'
+        +'<div class="setrow" style="margin-bottom:6px"><label style="width:70px">Leave at</label><select data-rc="'+i+'" data-f="at">'+(num(rc.at)===null?'<option value="" selected>— choose trailhead —</option>':'')+thOpts(num(rc.at)??-1)+'</select></div>'
+        +'<div class="setrow" style="margin-bottom:6px"><label style="width:70px">Jump to</label><select data-rc="'+i+'" data-f="to">'+thOpts(num(rc.to)??-1)+'</select></div>'
+        +'<div class="setrow" style="margin-bottom:6px"><label style="width:70px">Then go</label><select data-rc="'+i+'" data-f="dir"><option'+(rc.dir!=="SOBO"?" selected":"")+'>NOBO</option><option'+(rc.dir==="SOBO"?" selected":"")+'>SOBO</option></select></div>'
+        +'<div class="setrow" style="margin-bottom:0"><label style="width:70px">Travel day</label><input type="checkbox" data-rc="'+i+'" data-f="travel" '+(rc.travel!==false?"checked":"")+' style="flex:0;width:22px;height:22px"></div>'
+        +'</div>').join("");
+    }
+  }
+  // quests editor
+  const qHost=document.getElementById("qEditor");
+  if(qHost){
+    qHost.style.display=st.questsOn?"block":"none";
+    if(st.questsOn){
+      document.getElementById("qBuiltins").innerHTML=QUESTS.map(q=>
+        '<div class="setrow" style="margin-bottom:6px"><input type="checkbox" data-q="'+q.id+'" '+(state.questSel[q.id]?"checked":"")+' style="flex:0;width:22px;height:22px"><div class="sub" style="margin:0">'+esc(q.name)+' — mi '+q.at+', +'+q.mi+' mi, ↑'+q.gain.toLocaleString()+' ft</div></div>').join("");
+      document.getElementById("qCustom").innerHTML=(state.customQuests||[]).map((c,i)=>
+        '<div class="card" style="padding:8px 10px">'
+        +'<div class="sub" style="margin:0 0 6px"><b>Custom quest '+(i+1)+'</b> <button class="ilbl" data-cqdel="'+i+'" style="width:auto;float:right;color:var(--blaze)">remove ✕</button></div>'
+        +'<div class="setrow" style="margin-bottom:6px"><label style="width:70px">Name</label><input value="'+esc(c.name??"")+'" data-cq="'+i+'" data-f="name"></div>'
+        +'<div class="setrow" style="margin-bottom:6px"><label style="width:70px">At mi</label><input inputmode="decimal" value="'+esc(c.at??"")+'" data-cq="'+i+'" data-f="at" style="max-width:110px"></div>'
+        +'<div class="setrow" style="margin-bottom:6px"><label style="width:70px">Extra mi</label><input inputmode="decimal" value="'+esc(c.mi??"")+'" data-cq="'+i+'" data-f="mi" style="max-width:110px"></div>'
+        +'<div class="setrow" style="margin-bottom:0"><label style="width:70px">Gain ft</label><input inputmode="decimal" value="'+esc(c.gain??"")+'" data-cq="'+i+'" data-f="gain" style="max-width:110px"></div>'
+        +'</div>').join("");
+    }
+  }
+  // version + share
+  const bd=document.getElementById("bkDays"); if(bd&&document.activeElement!==bd) bd.value=state.settings.backupDays??"1";
+  const bs=document.getElementById("bkStatus");
+  if(bs) bs.textContent=state.lastExport?("Last off-device backup: "+new Date(state.lastExport).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})):"No off-device backup yet.";
+  const sl=document.getElementById("snapList");
+  if(sl) sl.innerHTML=readSnaps().map((sn,i)=>'<div class="setrow" style="margin-bottom:6px"><div class="sub" style="margin:0;flex:1">'+new Date(sn.t).toLocaleDateString("en-US",{month:"short",day:"numeric"})+' · '+sn.n+' day'+(sn.n===1?"":"s")+' logged · '+esc(sn.label)+'</div><button class="ilbl" data-snaprestore="'+i+'" style="width:auto">restore</button></div>').join("")||'<div class="sub">None yet — taken automatically once you log days.</div>';
+  const vEl=document.getElementById("verLine"); if(vEl) vEl.textContent="Natcho v"+APP_VERSION+" · © 2026 Neurobomber · Free for personal, noncommercial use (PolyForm NC 1.0.0 — see LICENSE in the repo). Commercial rights reserved.";
+  const uEl=document.getElementById("shareUrl"); if(uEl) uEl.textContent=canonical()||"(available when hosted)";
+  ensureQR();
+}
+function renderAll(focusInfo){
+  const m=compute(); LASTM=m;
+  const pi=document.getElementById("paceInput"); if(pi&&document.activeElement!==pi) pi.value=state.pace??"";
+  renderHeader(m); renderLog(m); renderStones(m); renderPlan(m); renderSetup(m);
+  const bb=document.getElementById("bkBanner");
+  if(bb){
+    const due=backupDue();
+    bb.style.display=due?"flex":"none";
+    if(due){const ago=state.lastExport?Math.floor((Date.now()-state.lastExport)/86400000):null;
+      document.getElementById("bkAgo").textContent=ago===null?"Your log has never been backed up off this phone.":ago+" day"+(ago===1?"":"s")+" since your last off-device backup.";}
+  }
+  const gb=document.getElementById("gpsBar");
+  if(gb){
+    const on=state.settings.gps==="on";
+    gb.hidden=!on; gb.style.display=on?"flex":"none";
+    if(on&&state.lastFix){
+      const f=state.lastFix, ago=Math.round((Date.now()-f.t)/60000);
+      gpsMsg("JMT mi "+fmtMi(f.mile)+" · "+fmtMi(f.off)+" mi off trail · "+(ago<1?"just now":ago+" min ago"));
+      const lb=document.getElementById("logFixBtn"); const td=tDayOf();
+      lb.style.display=(td>=1&&f.off<=3)?"block":"none";
+    }
+    if(on) document.getElementById("locateBtn").style.display=state.settings.gpsMode==="auto"?"none":"block";
+    const ec=document.getElementById("emgCard");
+    if(ec){
+      const f=state.lastFix;
+      const big=document.getElementById("emgCoords"), tm=document.getElementById("emgTime");
+      if(state.settings.gps!=="on"){ big.textContent="GPS is off"; tm.textContent="Enable GPS above to record coordinates."; }
+      else if(!f||f.lat===undefined){ big.textContent="No fix yet"; tm.textContent="Tap GPS Locate to record your coordinates."; }
+      else { big.textContent=f.lat.toFixed(5)+"\n"+f.lon.toFixed(5);
+        tm.textContent="JMT mi "+fmtMi(f.mile)+" · "+new Date(f.t).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); }
+    }
+  }
+  if(focusInfo){
+    const el=document.querySelector('[data-'+focusInfo.kind+'="'+focusInfo.d+'"]');
+    if(el){el.focus(); try{el.setSelectionRange(focusInfo.pos,focusInfo.pos);}catch(e){}}
+  }
+}
+
+// ---------------- day elevation peek (long-press) ----------------
+let LASTM=null;
+function dayProfile(r,view){
+  const v=r[view];
+  if(v.travel) return {travel:v.travel};
+  const pts=[]; let x=0;
+  const segX=[]; // {a,b,x0,mi} trail segs for mile->x mapping
+  for(const g of v.segs){
+    const N=24;
+    if(g.quest){
+      const q=activeQuests().find(z=>z.name===g.quest);
+      const anchorE=q?eleAtMile(q.at):((pts.length?pts[pts.length-1].e:2000));
+      const half=(g.qt||g.mi)/2||1;
+      for(let i=0;i<=N;i++){
+        const p=g.p0+(g.p1-g.p0)*i/N;
+        const e=anchorE+(g.qg||0)*(p<half?p/half:Math.max(0,(g.qt-p))/half);
+        pts.push({x:x+g.mi*i/N,e});
+      }
+    } else {
+      segX.push({a:g.a,b:g.b,x0:x,mi:g.mi});
+      for(let i=0;i<=N;i++) pts.push({x:x+g.mi*i/N,e:eleAtMile(g.a+(g.b-g.a)*i/N)});
+    }
+    x+=g.mi;
+  }
+  const xAtMile=f=>{
+    for(const sg of segX){
+      const lo=Math.min(sg.a,sg.b),hi=Math.max(sg.a,sg.b);
+      if(f>=lo-1e-6&&f<=hi+1e-6) return sg.x0+Math.abs(f-sg.a);
+    }
+    return null;
+  };
+  return {pts,total:x,xAtMile};
+}
+function showDayOverlay(d,view){
+  const m=LASTM||compute();
+  const r=m.rows[d-1]; if(!r) return;
+  const vd=viewDay(r,view,m);
+  const ov=document.getElementById("dayOv");
+  document.getElementById("ovTitle").textContent="DAY "+d+" · "+fmtDate(r.date)+(view==="plan"?" · PLAN":"");
+  document.getElementById("ovSub").textContent=vd.travel?("Travel day — jump to "+wname(vd.travel.to)):vd.loc;
+  const svgEl=document.getElementById("ovSvg"), st=document.getElementById("ovStats");
+  const prof=dayProfile(r,view);
+  if(prof.travel||!prof.pts||prof.pts.length<2||prof.total<0.05){
+    svgEl.innerHTML='<text x="160" y="90" text-anchor="middle" fill="#8a948a" font-size="13">'+(prof.travel?"No hiking — travel day":"No miles this day")+'</text>';
+    st.textContent=""; ov.style.display="flex"; return;
+  }
+  const W=320,H=170,padL=8,padR=8,padT=16,padB=26;
+  const es=prof.pts.map(p=>p.e), lo=Math.min(...es), hi=Math.max(...es), span=Math.max(150,hi-lo);
+  const X=x=>padL+(x/prof.total)*(W-padL-padR);
+  const Y=e=>H-padB-((e-lo)/span)*(H-padT-padB);
+  const path=(x0,x1)=>{let p="";for(const pt of prof.pts){if(pt.x<x0-1e-6||pt.x>x1+1e-6)continue;p+=(p?" L":"M")+X(pt.x).toFixed(1)+" "+Y(pt.e).toFixed(1);}return p;};
+  // completion split
+  let split=null, full=false;
+  if(view==="proj"){
+    if(r.actualMi!==null) full=true;
+    else if(r.d===tDayOf()&&state.settings.gps==="on"&&state.lastFix&&Date.now()-state.lastFix.t<86400000){
+      const sx=prof.xAtMile(state.lastFix.mile);
+      if(sx!==null) split=sx;
+      else if((state.lastFix.mile-0)&&prof.total>0){/* fix outside day span: leave gray */}
+    }
+  }
+  let svg='<path d="'+path(0,prof.total)+'" fill="none" stroke="#5c6f60" stroke-width="2"/>';
+  if(full) svg='<path d="'+path(0,prof.total)+'" fill="none" stroke="#E8A33D" stroke-width="2.4"/>';
+  else if(split!==null){
+    svg+='<path d="'+path(0,split)+'" fill="none" stroke="#E8A33D" stroke-width="2.4"/>';
+    const se=prof.pts.reduce((b,pt)=>Math.abs(pt.x-split)<Math.abs(b.x-split)?pt:b,prof.pts[0]);
+    svg+='<circle cx="'+X(split)+'" cy="'+Y(se.e)+'" r="4.5" fill="#E8A33D" stroke="#16241B" stroke-width="2"/>';
+    svg+='<text x="'+Math.min(Math.max(X(split),20),W-20)+'" y="'+(H-6)+'" fill="#E8A33D" font-size="10" text-anchor="middle">you · '+fmtMi(split)+' mi in</text>';
+  }
+  svg+='<text x="'+padL+'" y="'+(H-14)+'" fill="#8a948a" font-size="10">mi '+fmtMi(vd.pos0)+'</text>';
+  svg+='<text x="'+(W-padR)+'" y="'+(H-14)+'" fill="#8a948a" font-size="10" text-anchor="end">mi '+fmtMi(vd.pos)+'</text>';
+  svg+='<text x="'+padL+'" y="12" fill="#8a948a" font-size="10">high '+Math.round(hi).toLocaleString()+' ft · low '+Math.round(lo).toLocaleString()+' ft</text>';
+  svgEl.innerHTML=svg;
+  st.textContent=fmtMi(prof.total)+" mi · ↑"+vd.gl.up.toLocaleString()+" ↓"+vd.gl.down.toLocaleString()+" ft"+(full?" · completed":split!==null?" · amber = done today (GPS)":view==="proj"&&r.d<tDayOf()?" · not logged":"");
+  ov.style.display="flex";
+}
+function hideDayOverlay(){const ov=document.getElementById("dayOv");if(ov)ov.style.display="none";}
+let lpT=null,lpShown=false,lpXY=null;
+function lpBegin(target,x,y){
+  if(state.settings.dayPeek==="off")return;
+  const dc=target.closest&&target.closest(".daycol"); if(!dc)return;
+  const card=dc.closest("[data-day]"); if(!card)return;
+  lpXY=[x,y];
+  clearTimeout(lpT);
+  lpT=setTimeout(()=>{
+    lpShown=true;
+    try{const sel=window.getSelection&&window.getSelection(); if(sel&&sel.removeAllRanges) sel.removeAllRanges();}catch(e){}
+    showDayOverlay(parseInt(card.dataset.day,10),card.dataset.dview);
+  },350);
+}
+function lpEnd(){clearTimeout(lpT);lpT=null;if(lpShown){hideDayOverlay();lpShown=false;}}
+document.body.addEventListener("touchstart",e=>{if(e.touches.length===1)lpBegin(e.target,e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+document.body.addEventListener("touchmove",e=>{if(lpT&&lpXY&&e.touches.length){const dx=e.touches[0].clientX-lpXY[0],dy=e.touches[0].clientY-lpXY[1];if(dx*dx+dy*dy>144){clearTimeout(lpT);lpT=null;}}},{passive:true});
+document.body.addEventListener("touchend",lpEnd,{passive:true});
+document.body.addEventListener("touchcancel",lpEnd,{passive:true});
+document.body.addEventListener("mousedown",e=>lpBegin(e.target,e.clientX,e.clientY));
+document.body.addEventListener("mouseup",lpEnd);
+document.body.addEventListener("contextmenu",e=>{if(e.target.closest&&e.target.closest(".daycol"))e.preventDefault();});
+
+// ---------------- version check + share + QR ----------------
+async function checkVersion(auto){
+  const el=document.getElementById("verStatus"); if(!el)return;
+  if(!auto) el.textContent="Checking…";
+  try{
+    const cu=canonical(); if(!cu){ if(!auto) el.textContent="Can\u2019t check from a local copy."; return; }
+    const r=await fetch(cu+"version.json?t="+Date.now(),{cache:"no-store"});
+    const j=await r.json();
+    if(j.version&&j.version!==APP_VERSION) el.textContent="⬆ Version "+j.version+" is available — reopen the app online (twice) to update, or visit "+cu;
+    else el.textContent=auto?"":"✓ You have the current version ("+APP_VERSION+").";
+  }catch(e){ if(!auto) el.textContent="Couldn’t check — you appear to be offline."; }
+}
+async function ensureQR(){
+  const img=document.getElementById("qrImg"); if(!img)return;
+  const cu=canonical(); if(!cu){ img.style.display="none"; return; }
+  if(state.qr&&state.qr.u===cu){ img.src=state.qr.d; img.style.display="block"; return; }
+  if(!navigator.onLine){ img.style.display="none"; return; }
+  try{
+    const r=await fetch("https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data="+encodeURIComponent(cu));
+    const b=await r.blob();
+    const fr=new FileReader();
+    fr.onload=()=>{ state.qr={u:cu,d:fr.result}; persist(); img.src=fr.result; img.style.display="block"; };
+    fr.readAsDataURL(b);
+  }catch(e){ img.style.display="none"; }
+}
+async function shareApp(){
+  try{
+    if(navigator.share){ await navigator.share({title:"Neurobomber’s Natcho JMT Planner",url:canonical()||location.href}); return; }
+  }catch(e){}
+  try{ await navigator.clipboard.writeText(canonical()||location.href); flashSave("link copied"); }catch(e){ flashSave("copy failed"); }
+}
+
+// ---------------- events ----------------
+document.body.addEventListener("click",e=>{
+  const mt=e.target.closest&&e.target.closest("[data-modetoggle]");
+  if(mt){
+    const d=parseInt(mt.dataset.modetoggle,10);
+    const m=compute(); const r=m.rows[d-1]; if(!r)return;
+    const cur=r.entryMode, next=cur==="pct"?"mi":"pct";
+    const ent=state.actuals[d];
+    if(ent&&num(ent.v)!==null&&r.actualMi!==null){
+      const newV=next==="pct"?fmtMi(r.proj.pos).replace(/,/g,""):fmtMi(r.actualMi).replace(/,/g,"");
+      state.actuals[d]={v:newV,m:next};
+    } else {
+      if(next===(state.settings.logMode||"mi")) delete state.actuals[d];
+      else state.actuals[d]={v:"",m:next};
+    }
+    persist(); renderAll(); return;
+  }
+  const rd=e.target.closest&&e.target.closest("[data-rcdel]");
+  if(rd){ state.routeChanges.splice(parseInt(rd.dataset.rcdel,10),1); persist(); renderAll(); return; }
+  const sr=e.target.closest&&e.target.closest("[data-snaprestore]");
+  if(sr){
+    const sn=readSnaps()[parseInt(sr.dataset.snaprestore,10)];
+    if(sn&&confirm("Restore snapshot from "+new Date(sn.t).toLocaleDateString()+" ("+sn.n+" logged days)? Current data will be replaced (a pre-restore snapshot is kept).")){
+      snapshotNow("pre-restore"); state=sn.data; normalize(state); persist(); renderAll(); flashSave("snapshot restored");
+    }
+    return;
+  }
+  const cd=e.target.closest&&e.target.closest("[data-cqdel]");
+  if(cd){ state.customQuests.splice(parseInt(cd.dataset.cqdel,10),1); persist(); renderAll(); return; }
+});
+document.body.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.rc!==undefined){
+    const i=parseInt(t.dataset.rc,10), f=t.dataset.f;
+    if(!state.routeChanges[i]) return;
+    state.routeChanges[i][f]=f==="travel"?t.checked:t.value;
+    persist(); renderAll(); return;
+  }
+  if(t.dataset&&t.dataset.cq!==undefined){
+    const i=parseInt(t.dataset.cq,10), f=t.dataset.f;
+    if(!state.customQuests[i]) return;
+    state.customQuests[i][f]=t.value;
+    persist(); renderAll(); return;
+  }
+  if(t.dataset&&t.dataset.q!==undefined){
+    state.questSel[t.dataset.q]=t.checked; persist(); renderAll(); return;
+  }
+});
+document.body.addEventListener("input",e=>{
+  const t=e.target; if(t.tagName!=="INPUT"||t.type==="date"||t.type==="checkbox")return;
+  if(t.dataset.rc!==undefined||t.dataset.cq!==undefined)return; // handled on change
+  const clean=t.value.replace(/[^0-9.]/g,""); if(clean!==t.value)t.value=clean;
+  if(t.dataset.bkdays!==undefined){ state.settings.backupDays=clean; persist(); return; }
+  const kind=t.dataset.actual?"actual":t.dataset.plan?"plan":t.dataset.pace?"pace":null; if(!kind)return;
+  const d=t.dataset.actual||t.dataset.plan||"";
+  if(kind==="actual") state.actuals[d]={v:clean,m:t.dataset.mode||state.settings.logMode||"mi"}; else if(kind==="plan") state.planned[d]=clean; else state.pace=clean;
+  if(clean===""){
+    if(kind==="actual"){ const mo=t.dataset.mode||"mi"; if(mo===(state.settings.logMode||"mi")) delete state.actuals[d]; else state.actuals[d]={v:"",m:mo}; }
+    else if(kind==="plan") delete state.planned[d];
+  }
+  persist();
+  renderAll({kind,d:kind==="pace"?"1":d,pos:t.selectionStart});
+});
+document.getElementById("dateInput").addEventListener("change",e=>{state.settings.date=e.target.value;persist();renderAll();});
+document.getElementById("startSel").addEventListener("change",e=>{state.settings.start=parseFloat(e.target.value);persist();renderAll();});
+document.getElementById("endSel").addEventListener("change",e=>{state.settings.end=parseFloat(e.target.value);persist();renderAll();});
+function setDir(dir){
+  const st=state.settings;
+  if(st.dir===dir)return;
+  st.dir=dir;
+  st.start=dir==="NOBO"?0:219.2;
+  st.end=dir==="NOBO"?219.2:0;
+  persist(); renderAll();
+}
+function thWindow(){
+  const st=state.settings, sign=st.dir==="SOBO"?-1:1;
+  return TRAILHEADS.filter(w=>(w[0]-st.start)*sign>1e-6&&(st.end-w[0])*sign>1e-6).sort((a,b)=>(a[0]-b[0])*sign);
+}
+function applyPreset(kind){
+  const st=state.settings;
+  if(state.routeChanges.length&&!confirm("Replace your existing route changes with this preset?"))return;
+  st.legsOn=true;
+  if(kind==="yoyo"){
+    state.routeChanges=[{at:st.end,to:st.end,dir:st.dir==="SOBO"?"NOBO":"SOBO",travel:false}];
+    st.end=st.start; // walk it back to where you began
+  } else if(kind==="cwExit"){
+    state.settings.dir="NOBO"; state.settings.start=0; state.settings.end=237.9;
+    state.routeChanges=[{at:208.7,to:208.7,dir:"SOBO",travel:false},{at:200.5,to:219.3,dir:"NOBO",travel:false}];
+  } else if(kind==="cwStart"){
+    state.settings.dir="SOBO"; state.settings.start=237.9; state.settings.end=0;
+    state.routeChanges=[{at:219.3,to:200.5,dir:"NOBO",travel:false},{at:208.7,to:208.7,dir:"SOBO",travel:false}];
+  } else {
+    const ths=thWindow();
+    if(ths.length>=2){
+      const mid=Math.floor(ths.length/2);
+      const q3=Math.max(mid+1,Math.min(ths.length-1,Math.floor(ths.length*0.75)));
+      const A=ths[mid][0], B=ths[q3][0];
+      if(kind==="jump") state.routeChanges=[{at:A,to:B,dir:st.dir,travel:true}];
+      else state.routeChanges=[{at:A,to:B,dir:st.dir==="SOBO"?"NOBO":"SOBO",travel:true},{at:A,to:B,dir:st.dir,travel:true}];
+    }
+  }
+  persist(); renderAll();
+  const e=document.getElementById("rcEditor"); if(e&&e.scrollIntoView)setTimeout(()=>e.scrollIntoView({behavior:"smooth",block:"start"}),60);
+}
+const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.addEventListener("click",fn);};
+on("pJump",()=>applyPreset("jump"));
+on("pFlip",()=>applyPreset("flip"));
+on("pYoyo",()=>applyPreset("yoyo"));
+on("pCwExit",()=>applyPreset("cwExit"));
+on("pCwStart",()=>applyPreset("cwStart"));
+on("dirNOBO",()=>setDir("NOBO")); on("dirSOBO",()=>setDir("SOBO"));
+on("gpsOn",()=>{state.settings.gps="on";persist();renderAll();});
+on("gpsOff",()=>{state.settings.gps="off";persist();renderAll();});
+on("gpsMan",()=>{state.settings.gpsMode="manual";persist();renderAll();});
+on("gpsAuto",()=>{state.settings.gpsMode="auto";persist();renderAll();});
+on("locateBtn",()=>doLocate(false)); on("locateBtn2",()=>doLocate(false));
+on("logFixBtn",()=>{
+  const td=tDayOf(); if(td<1||!state.lastFix)return;
+  state.actuals[td]={v:String(state.lastFix.mile),m:"pct"};
+  persist(); renderAll();
+});
+on("logMi",()=>{state.settings.logMode="mi";persist();renderAll();});
+on("logPct",()=>{state.settings.logMode="pct";persist();renderAll();});
+on("dpOn",()=>{state.settings.dayPeek="on";persist();renderAll();});
+on("dpOff",()=>{state.settings.dayPeek="off";persist();renderAll();});
+on("colOn",()=>{state.settings.colors=true;persist();renderAll();});
+on("colOff",()=>{state.settings.colors=false;persist();renderAll();});
+on("legsOn2",()=>{state.settings.legsOn=true;persist();renderAll();const e=document.getElementById("rcEditor");if(e&&e.scrollIntoView)setTimeout(()=>e.scrollIntoView({behavior:"smooth",block:"start"}),60);});
+on("legsOff2",()=>{state.settings.legsOn=false;persist();renderAll();});
+on("qOn",()=>{state.settings.questsOn=true;persist();renderAll();const e=document.getElementById("qEditor");if(e&&e.scrollIntoView)setTimeout(()=>e.scrollIntoView({behavior:"smooth",block:"start"}),60);});
+on("qOff",()=>{state.settings.questsOn=false;persist();renderAll();});
+on("rcAdd",()=>{state.routeChanges.push({at:"",to:TRAILHEADS[0][0],dir:"NOBO",travel:true});persist();renderAll();});
+on("cqAdd",()=>{state.customQuests.push({name:"",at:"",mi:"",gain:""});persist();renderAll();});
+on("resetBtn",()=>{state.planned={};persist();renderAll();});
+on("wipeBtn",()=>{
+  if(confirm("Erase all logged days and per-day overrides? Your route settings stay.")){state.actuals={};state.planned={};persist();renderAll();}
+});
+on("bkShare",shareBackup);
+on("bkCopy",copyBackup);
+on("bkImport",importBackup);
+on("bkNow",shareBackup);
+on("verBtn",()=>checkVersion(false));
+on("shareBtn",shareApp);
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  ["log","stones","plan","setup"].forEach(k=>document.getElementById("tab-"+k).hidden=(k!==b.dataset.tab));
+  if(b.dataset.tab==="log"||b.dataset.tab==="plan") maybeAutoLocate();
+  window.scrollTo(0,0);
+}));
+
+const jw=document.getElementById("jsWarn"); if(jw) jw.remove();
+if('serviceWorker' in navigator && location.protocol==='https:'){try{navigator.serviceWorker.register('./sw.js');}catch(e){}}
+maybeAutoSnapshot();
+renderAll();
+maybeAutoLocate();
+checkVersion(true);
+const td=tDayOf(); if(td>=1){const c=document.querySelector(".card.today");if(c)setTimeout(()=>c.scrollIntoView({block:"center"}),50);}
+
+</script>
+</body>
+</html>
