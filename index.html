@@ -182,9 +182,9 @@ svg text{font-family:var(--mono)}
       </div>
       <div class="sub" style="margin:-4px 0 8px 102px">Show Day 0 (arrival/staging at the trailhead) and the End+ walk-out day (e.g. descending from the summit, or the exit hike back to a road). Turn off if you only want walking days.</div>
       <div class="setrow"><label>Profile scale</label>
-        <div class="seg2"><button id="scDay">Day-fit</button><button id="scTrail">Whole-trail</button></div>
+        <div class="seg2"><button id="scDay">Day</button><button id="scGain">vs Hardest</button><button id="scTrail">Whole trail</button></div>
       </div>
-      <div class="sub" style="margin:-4px 0 8px 102px">Day-fit: each popup stretches to that day's own range (most detail). Whole-trail: every popup shares one elevation scale, so a flat day looks flat and days are comparable.</div>
+      <div class="sub" style="margin:-4px 0 8px 102px"><b>Day</b>: fills the popup with this day's own range (most detail). <b>vs Hardest</b>: scaled so your biggest-climb day fills the frame — every day's height shows how it compares. <b>Whole trail</b>: one absolute sea-level-to-summit scale.</div>
       <div class="sub" style="margin:2px 0 8px 102px">Profile shading = altitude risk (progressive): <span style="background:linear-gradient(90deg,#eef3ef,#f6dfe8,#eda0a0,#d94f3d,#b21f1f);padding:1px 22px;border-radius:3px;color:#12211a;font-weight:700">low → high</span> — pink ≈ 6,500 ft (AMS onset), red ≈ 9,800 ft, deep red ≈ 11,800 ft+ (HAPE/HACE risk).
       <div class="setrow"><label>Colours</label>
         <div class="seg2"><button id="colOn">On</button><button id="colOff">Off</button></div>
@@ -279,7 +279,7 @@ svg text{font-family:var(--mono)}
 
 <script>
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
-const APP_VERSION="1.2.0";
+const APP_VERSION="1.2.1";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
 const CANONICAL_PIN=""; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
@@ -737,6 +737,17 @@ function compute(){
   }
   const next=stones.find(s=>!s.reached&&s.away!==null&&s.away>1e-6);
   // --- Day 0 (staging) + End+1 (walk-out) metadata from TRAIL config ---
+  // max single-day elevation span (for "vs hardest day" profile scale)
+  let maxDaySpan=150;
+  for(const r of rows){
+    for(const view of ["plan","proj"]){
+      const segs=r[view].segs; if(!segs||!segs.length) continue;
+      let dHi=-1e9,dLo=1e9,any=false;
+      for(const g of segs){ if(g.quest)continue; const lo=Math.min(g.a,g.b),hi=Math.max(g.a,g.b);
+        for(let mm=lo;mm<=hi+1e-9;mm+=0.25){ const e=eleFineAtMile(mm); if(e>dHi)dHi=e; if(e<dLo)dLo=e; any=true; } }
+      if(any&&dHi-dLo>maxDaySpan) maxDaySpan=dHi-dLo;
+    }
+  }
   let day0=null, exitDay=null;
   if(TRAIL&&TRAIL.day0&&TRAIL.day0.enabled&&st.day0!==false){
     const dc=TRAIL.day0.byDir[st.dir]||TRAIL.day0.byDir.NOBO;
@@ -755,7 +766,7 @@ function compute(){
     if(TRAIL&&TRAIL.keyPoints) for(const k of TRAIL.keyPoints){ const lo=Math.min(r.proj.pos0,r.proj.pos),hi=Math.max(r.proj.pos0,r.proj.pos); if(k[0]>lo+1e-6&&k[0]<=hi+1e-6){ r.keyPt=k[1]; break; } }
   }
   return {st,legs,issues,quests,totalTrail,totalPlanned,rows,cur,lastEntered,
-    ledger,red,day0,exitDay,envMin:rawMin,envMax:rawMax,uniqueDone,totalWalked:cur.cum,stones,next,finishETA,pace};
+    ledger,red,day0,exitDay,maxDaySpan,envMin:rawMin,envMax:rawMax,uniqueDone,totalWalked:cur.cum,stones,next,finishETA,pace};
 }
 
 // ---------------- per-day derivations for a view ----------------
@@ -962,7 +973,7 @@ function renderSetup(m){
   T("gpsMan",st.gpsMode!=="auto");T("gpsAuto",st.gpsMode==="auto");
   T("logMi",st.logMode!=="pct");T("logPct",st.logMode==="pct");
   T("dpOn",st.dayPeek!=="off");T("dpOff",st.dayPeek==="off");
-  T("scDay",st.profScale!=="trail");T("scTrail",st.profScale==="trail");
+  T("scDay",(st.profScale||"day")==="day");T("scGain",st.profScale==="gain");T("scTrail",st.profScale==="trail");
   T("stgOn",st.day0!==false);T("stgOff",st.day0===false);
   T("colOn",st.colors!==false);T("colOff",st.colors===false);
   T("legsOn2",st.legsOn===true);T("legsOff2",st.legsOn!==true);
@@ -1110,8 +1121,16 @@ function showDayOverlay(d,view){
   }
   const W=340,H=190,padL=6,padR=6,padT=22,padB=30;
   let lo,hi;
+  const dayEs=[]; for(const p of prof.pts){ dayEs.push(p.hi!==undefined?p.hi:p.e); dayEs.push(p.lo!==undefined?p.lo:p.e); }
+  const dLo=Math.min(...dayEs), dHi=Math.max(...dayEs);
   if(state.settings.profScale==="trail"){ lo=Math.min(...ELE.lo); hi=Math.max(...ELE.hi); }
-  else { const es=[]; for(const p of prof.pts){ es.push(p.hi!==undefined?p.hi:p.e); es.push(p.lo!==undefined?p.lo:p.e); } lo=Math.min(...es); hi=Math.max(...es); }
+  else if(state.settings.profScale==="gain"){
+    // window sized to the hardest day's span, centered on this day's mid elevation
+    const win=Math.max(150,(m.maxDaySpan||150));
+    const mid=(dLo+dHi)/2, pad=(win-(dHi-dLo))/2;
+    lo=dLo-Math.max(0,pad); hi=lo+win;
+  }
+  else { lo=dLo; hi=dHi; }
   const span=Math.max(150,hi-lo);
   const X=x=>padL+(x/prof.total)*(W-padL-padR);
   const Y=e=>H-padB-((e-lo)/span)*(H-padT-padB);
@@ -1376,6 +1395,7 @@ on("dpOn",()=>{state.settings.dayPeek="on";persist();renderAll();});
 on("stgOn",()=>{state.settings.day0=true;state.settings.exitDay=true;persist();renderAll();});
 on("stgOff",()=>{state.settings.day0=false;state.settings.exitDay=false;persist();renderAll();});
 on("scDay",()=>{state.settings.profScale="day";persist();renderAll();});
+on("scGain",()=>{state.settings.profScale="gain";persist();renderAll();});
 on("scTrail",()=>{state.settings.profScale="trail";persist();renderAll();});
 on("dpOff",()=>{state.settings.dayPeek="off";persist();renderAll();});
 on("colOn",()=>{state.settings.colors=true;persist();renderAll();});
