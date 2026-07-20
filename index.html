@@ -314,7 +314,7 @@ body.offtrail::after{content:"";position:fixed;inset:0;background:rgba(150,20,20
 <script>
 
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
-const APP_VERSION="5.0.7-jmt.1";
+const APP_VERSION="5.0.8-jmt.1";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
 const CANONICAL_PIN="https://neurobomberhikes.github.io/Natcho-JMT-Planner/"; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
@@ -394,7 +394,7 @@ function defaultState(){
   const t=new Date();
   const iso=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
   return {actuals:{},planned:{},pace:"",routeChanges:[],questSel:{},customQuests:[],
-    settings:{dir:"NOBO",start:0,end:T_END,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false,offWarn:"off",offDist:50,offFreq:30,offBuzz:true,offAppRed:false,offPeekRed:false}};
+    settings:{dir:"NOBO",start:0,end:T_END,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false,offWarn:"off",offDist:50,offFreq:30,offBuzz:false,offAppRed:true,offPeekRed:false}};
 }
 function saveState(s){
   memStore=s;
@@ -423,8 +423,8 @@ if(st.settings.exitDay===undefined) st.settings.exitDay=true;
     if(st.settings.offWarn===undefined) st.settings.offWarn="off";
     if(st.settings.offDist===undefined) st.settings.offDist=50;
     if(st.settings.offFreq===undefined) st.settings.offFreq=30;
-    if(st.settings.offBuzz===undefined) st.settings.offBuzz=(st.settings.offType?st.settings.offType==="buzz":true);
-    if(st.settings.offAppRed===undefined) st.settings.offAppRed=(st.settings.offType==="appRed");
+    if(st.settings.offBuzz===undefined) st.settings.offBuzz=(st.settings.offType==="buzz");
+    if(st.settings.offAppRed===undefined) st.settings.offAppRed=(st.settings.offType?st.settings.offType==="appRed":true);
     if(st.settings.offPeekRed===undefined) st.settings.offPeekRed=(st.settings.offType==="peekRed");
 if(!st.actuals) st.actuals={}; if(!st.planned) st.planned={};
 for(const k in st.actuals){ if(typeof st.actuals[k]==="string") st.actuals[k]={v:st.actuals[k],m:"mi"}; }
@@ -537,7 +537,7 @@ function doLocate(silent){
     const s=snapToTrail(pos.coords.latitude,pos.coords.longitude);
     state.lastFix={mile:Math.round(s.mile*10)/10,off:Math.round(s.off*10)/10,t:Date.now(),
       lat:Math.round(pos.coords.latitude*1e5)/1e5,lon:Math.round(pos.coords.longitude*1e5)/1e5};
-    checkOffTrail(s.off);
+    checkOffTrail(s.off,true);
     persist(); renderAll();
   },err=>{
     gpsBusy=false;
@@ -578,21 +578,24 @@ function fireOffWarn(offMeters){
     beep();
   }
   if(st.offAppRed){ _offActive=true; document.body.classList.add("offtrail"); }
-  if(st.offPeekRed){ _offActive=true; const ov=document.getElementById("dayOv"); if(ov) ov.classList.add("offtrail"); }
+  if(st.offPeekRed){ _offActive=true; const ov=document.getElementById("dayOv"); if(ov&&ov.dataset.view!=="plan") ov.classList.add("offtrail"); }
   gpsMsg("⚠ OFF TRAIL — "+(dist>=1609?( (dist/1609.34).toFixed(1)+" mi"):(dist+" m"))+" from the path");
 }
-function checkOffTrail(offMiles){
+function checkOffTrail(offMiles, fromFix){
   const st=state.settings;
-  if(st.offWarn!=="on"||st.gps!=="on"||st.gpsMode!=="auto"){ clearOffTrailVisual(); return; }
+  if(st.offWarn!=="on"||st.gps!=="on"){ clearOffTrailVisual(); return; }
+  if(st.gpsMode!=="auto"&&!fromFix) return;   // heartbeat is auto-only; leave manual visuals alone
   const offM=offMiles*1609.34;
   const thresh=Number(st.offDist)||50;
   const freqMs=(Number(st.offFreq)||30)*1000;
   if(offM>thresh){
     const now=Date.now();
-    if(now-_offWarnT>=freqMs){ _offWarnT=now; fireOffWarn(offM); }
+    if(fromFix&&st.gpsMode!=="auto"){ _offWarnT=now; fireOffWarn(offM); }   // manual: verdict on every Locate
+    else if(now-_offWarnT>=freqMs){ _offWarnT=now; fireOffWarn(offM); }
     else if((st.offAppRed||st.offPeekRed)&&!_offActive){ fireOffWarn(offM); }
   } else {
     clearOffTrailVisual();
+    if(fromFix&&st.gpsMode!=="auto") gpsMsg("✓ On trail — "+Math.round(offM)+" m from centerline");
   }
 }
 // heartbeat: re-checks every 5s against the last fix, independent of GPS fetch timing.
@@ -1267,6 +1270,9 @@ function showDayOverlay(d,view){
   const vd=viewDay(r,view,m);
   const ov=document.getElementById("dayOv");
   document.getElementById("ovTitle").textContent="DAY "+d+" · "+fmtDate(r.date)+(view==="plan"?" · PLAN":"");
+  ov.dataset.view=view;
+  if(view==="plan"){ ov.classList.remove("offtrail"); }
+  else if(_offActive&&state.settings.offPeekRed){ ov.classList.add("offtrail"); }
   document.getElementById("ovSub").textContent=vd.travel?("Travel day — jump to "+wname(vd.travel.to)):vd.loc;
   const svgEl=document.getElementById("ovSvg"), st=document.getElementById("ovStats");
   const prof=dayProfile(r,view);
