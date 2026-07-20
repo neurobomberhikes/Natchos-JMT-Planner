@@ -77,10 +77,10 @@ svg text{font-family:var(--mono)}
 .card.bg-quest{background:#EBE4F2;border-color:#a68cc4}
 .mk.quest{background:#EBE4F2;border-color:#a68cc4;color:#5b4479}
 
-/* off-trail warning visual states */
-body.offtrail{background:#7a1e1e !important;transition:background .3s}
-body.offtrail .wrap,body.offtrail header{background:transparent}
-#dayOv.offtrail .ovcard,#dayOv.offtrail{background:#7a1e1e !important}
+/* off-trail warning visual states — fixed wash, cannot be hidden by app backgrounds */
+body.offtrail::after{content:"";position:fixed;inset:0;background:rgba(150,20,20,.42);pointer-events:none;z-index:9999;animation:offpulse 1.6s ease-in-out infinite}
+@keyframes offpulse{0%,100%{opacity:.75}50%{opacity:1}}
+#dayOv.offtrail::after{content:"";position:fixed;inset:0;background:rgba(150,20,20,.45);pointer-events:none;z-index:9999}
 .offwarn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .offwarn-row label{font-size:12px;color:var(--dim,#8fa596);margin:0 4px 0 0}
 .offwarn-row input[type=number]{width:72px}
@@ -195,6 +195,7 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
             <button class="reset offTypeBtn" id="offPeek" data-type="peekRed" style="flex:1;padding:8px 4px;margin:0">Profile red</button>
           </div>
           <div class="sub" id="offActive" style="margin-top:6px"></div>
+          <div class="sub" style="margin-top:4px;opacity:.75">iPhone note: Safari can't vibrate; the beep works after your first tap in the app. App red / Profile red are the most reliable on iOS.</div>
         </div>
       </div>
       <details style="margin:-2px 0 10px 102px">
@@ -313,7 +314,7 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
 <script>
 
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
-const APP_VERSION="5.0.5-jmt.1";
+const APP_VERSION="5.0.6-jmt.1";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
 const CANONICAL_PIN="https://neurobomberhikes.github.io/Natcho-JMT-Planner/"; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
@@ -544,7 +545,26 @@ function doLocate(silent){
   },{enableHighAccuracy:true,timeout:45000,maximumAge:60000});
 }
 function gpsMsg(t){for(const id of ["gpsStatus","gpsStatus2"]){const el=document.getElementById(id);if(el)el.textContent=t;}}
-let _offWarnT=0, _offActive=false;
+let _offWarnT=0, _offActive=false, _offAC=null;
+// prime a shared AudioContext on first user gesture so beeps can play later (iOS requirement)
+if(typeof document!=="undefined"&&document.addEventListener){
+  document.addEventListener("touchstart",primeAudio,{once:true,passive:true});
+  document.addEventListener("click",primeAudio,{once:true});
+}
+function primeAudio(){
+  try{ const AC=window.AudioContext||window.webkitAudioContext;
+    if(AC&&!_offAC){ _offAC=new AC(); if(_offAC.resume) _offAC.resume(); } }catch(e){}
+}
+function beep(){
+  try{
+    if(!_offAC){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) _offAC=new AC(); }
+    if(!_offAC) return;
+    if(_offAC.resume) _offAC.resume();
+    const o=_offAC.createOscillator(), g=_offAC.createGain();
+    o.frequency.value=880; o.connect(g); g.connect(_offAC.destination); g.gain.value=0.15;
+    o.start(); setTimeout(()=>{try{o.stop();}catch(e){}},350);
+  }catch(e){}
+}
 function clearOffTrailVisual(){
   _offActive=false;
   document.body.classList.remove("offtrail");
@@ -554,22 +574,17 @@ function fireOffWarn(offMeters){
   const st=state.settings;
   const dist=Math.round(offMeters);
   if(st.offBuzz){
-    try{ if(navigator.vibrate) navigator.vibrate([180,90,180]); }catch(e){}
-    try{
-      const AC=window.AudioContext||window.webkitAudioContext;
-      if(AC){ const ac=new AC(); const o=ac.createOscillator(), g=ac.createGain();
-        o.frequency.value=880; o.connect(g); g.connect(ac.destination); g.gain.value=0.12;
-        o.start(); setTimeout(()=>{o.stop(); ac.close&&ac.close();},350); }
-    }catch(e){}
+    try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
+    beep();
   }
   if(st.offAppRed){ _offActive=true; document.body.classList.add("offtrail"); }
   if(st.offPeekRed){ _offActive=true; const ov=document.getElementById("dayOv"); if(ov) ov.classList.add("offtrail"); }
-  gpsMsg("⚠ Off trail — "+dist+" m from the path");
+  gpsMsg("⚠ OFF TRAIL — "+(dist>=1609?( (dist/1609.34).toFixed(1)+" mi"):(dist+" m"))+" from the path");
 }
 function checkOffTrail(offMiles){
   const st=state.settings;
   if(st.offWarn!=="on"||st.gps!=="on"||st.gpsMode!=="auto"){ clearOffTrailVisual(); return; }
-  const offM=offMiles*1609.34;               // miles -> meters
+  const offM=offMiles*1609.34;
   const thresh=Number(st.offDist)||50;
   const freqMs=(Number(st.offFreq)||30)*1000;
   if(offM>thresh){
@@ -580,11 +595,24 @@ function checkOffTrail(offMiles){
     clearOffTrailVisual();
   }
 }
+// heartbeat: re-checks every 5s against the last fix, independent of GPS fetch timing.
+// This is what makes "warn every N seconds" actually happen.
+function offTrailTick(){
+  const st=state.settings;
+  if(st.offWarn!=="on"||st.gps!=="on"||st.gpsMode!=="auto") return;
+  const fx=state.lastFix;
+  if(!fx||typeof fx.off!=="number") return;
+  const age=Date.now()-(fx.t||0);
+  if(age>15*60*1000) return;            // ignore very stale fixes
+  checkOffTrail(fx.off);
+}
+if(typeof setInterval!=="undefined"){ setInterval(function(){ offTrailTick(); try{ if(state&&state.settings&&state.settings.offWarn==="on") maybeAutoLocate(); }catch(e){} }, 5000); }
 function maybeAutoLocate(){
   const st=state.settings;
   if(st.gps!=="on"||st.gpsMode!=="auto")return;
   const age=state.lastFix?Date.now()-state.lastFix.t:1e15;
-  if(age>5*60*1000) doLocate(true);
+  const cap=(st.offWarn==="on")?60*1000:5*60*1000;   // tighter refresh while off-trail warning armed
+  if(age>cap) doLocate(true);
 }
 
 // ---------------- backup & snapshots ----------------
