@@ -76,6 +76,14 @@ svg text{font-family:var(--mono)}
 .card.bg-travel{background:#E7EDF4;border-color:#8ba3bd}
 .card.bg-quest{background:#EBE4F2;border-color:#a68cc4}
 .mk.quest{background:#EBE4F2;border-color:#a68cc4;color:#5b4479}
+
+/* off-trail warning visual states */
+body.offtrail{background:#7a1e1e !important;transition:background .3s}
+body.offtrail .wrap,body.offtrail header{background:transparent}
+#dayOv.offtrail .ovcard,#dayOv.offtrail{background:#7a1e1e !important}
+.offwarn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.offwarn-row label{font-size:12px;color:var(--dim,#8fa596);margin:0 4px 0 0}
+.offwarn-row input[type=number]{width:72px}
 </style>
 </head>
 <body>
@@ -164,6 +172,28 @@ svg text{font-family:var(--mono)}
         <div class="seg2"><button id="gpsMan">Manual</button><button id="gpsAuto">Auto</button></div>
       </div>
       <div class="sub" style="margin:-4px 0 8px 102px">Uses single position fixes only (seconds of radio — minimal battery). Manual: fix only when you tap Locate. Auto: one fix when opening Log/Plan, at most every 5 min. Off: GPS never used.</div>
+      <div class="setrow"><label>Off-trail warning</label>
+        <div class="seg2"><button id="offOn">On</button><button id="offOff">Off</button></div>
+      </div>
+      <div class="sub" style="margin:-4px 0 6px 102px">When GPS is On + Auto, warns you if you drift off the trail. (Needs GPS On and refresh set to Auto.)</div>
+      <div id="offOpts" style="margin:0 0 8px 102px">
+        <div class="offwarn-row">
+          <label>Distance off trail</label>
+          <input type="number" id="offDist" min="10" max="500" step="5" value="50"> <span style="color:var(--dim,#8fa596);font-size:12px">metres</span>
+        </div>
+        <div class="offwarn-row">
+          <label>Warn every</label>
+          <input type="number" id="offFreq" min="10" max="300" step="5" value="30"> <span style="color:var(--dim,#8fa596);font-size:12px">seconds</span>
+        </div>
+        <div class="offwarn-row" style="margin-top:8px">
+          <label style="width:100%;margin-bottom:2px">Warning type</label>
+          <div class="seg3" style="display:flex;gap:6px;width:100%">
+            <button class="reset offTypeBtn" id="offBuzz" data-type="buzz" style="flex:1;padding:8px 4px;margin:0">Buzz / beep</button>
+            <button class="reset offTypeBtn" id="offApp" data-type="appRed" style="flex:1;padding:8px 4px;margin:0">App red</button>
+            <button class="reset offTypeBtn" id="offPeek" data-type="peekRed" style="flex:1;padding:8px 4px;margin:0">Profile red</button>
+          </div>
+        </div>
+      </div>
       <details style="margin:-2px 0 10px 102px">
         <summary style="cursor:pointer;color:var(--trail);font-size:13px">How to enable GPS (if location is blocked)</summary>
         <div class="sub" style="margin-top:6px">The prompt names the <b>browser/website</b>, not this app, because installed web apps use the browser's location permission. If you tapped “Don’t Allow,” re-enable it:</div>
@@ -225,16 +255,19 @@ svg text{font-family:var(--mono)}
       <div id="snapList"></div>
       <div class="note">Share/copy puts your data somewhere off this phone (Notes, a message to yourself). Snapshots protect against accidental erases but live on this phone — they can't survive deleting the app icon.</div>
     </div>
+
     <div class="card" style="border-color:var(--amber);background:#FBF3DC">
       <div class="daynum" style="color:#8a651f">☕ ENJOYING THE NATCHO?</div>
       <div class="sub" style="margin-top:4px">The Natcho is free for personal use, built by one hiker. Coffees fund trail-data updates and new trails.</div>
       <a href="https://buymeacoffee.com/Neurobomberhikes" target="_blank" rel="noopener" class="reset" style="display:block;text-align:center;text-decoration:none;margin:10px 0 2px;background:var(--amber);border-color:#C99A2E;color:#3d2f0a">☕ Buy me a coffee</a>
     </div>
+    
     <div class="card">
       <div class="daynum">VERSION &amp; SHARING</div>
       <div class="sub" id="verLine" style="margin-top:4px"></div>
       <div class="sub" id="verStatus" style="margin-top:4px"></div>
       <button class="reset" id="verBtn" style="margin:8px 0">Check for update</button>
+      <div class="sub" style="margin-top:12px">Feedback, corrections, or a trail request? Email <a href="mailto:neurobomberhikes@gmail.com?subject=Natcho%20feedback" style="color:var(--pine,#2f5d3a);font-weight:600">neurobomberhikes@gmail.com</a></div>
       <div class="sub">Share the Natcho — the official source is:</div>
       <div class="mono" id="shareUrl" style="font-size:13px;margin:4px 0;word-break:break-all"></div>
       <button class="reset" id="shareBtn" style="margin:8px 0">Share link</button>
@@ -279,7 +312,7 @@ svg text{font-family:var(--mono)}
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
 const APP_VERSION="5.0.1-jmt.1";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
-const CANONICAL_PIN=""; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
+const CANONICAL_PIN="https://neurobomberhikes.github.io/Natcho-JMT-Planner/"; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
   if(CANONICAL_PIN) return CANONICAL_PIN;
   if(typeof location!=="undefined"&&location.protocol==="https:") return location.origin+location.pathname.replace(/index\.html$/,"");
@@ -357,7 +390,7 @@ function defaultState(){
   const t=new Date();
   const iso=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
   return {actuals:{},planned:{},pace:"",routeChanges:[],questSel:{},customQuests:[],
-    settings:{dir:"NOBO",start:0,end:T_END,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false}};
+    settings:{dir:"NOBO",start:0,end:T_END,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false,offWarn:"off",offDist:50,offFreq:30,offType:"buzz"}};
 }
 function saveState(s){
   memStore=s;
@@ -383,6 +416,10 @@ if(st.settings.dayPeek===undefined) st.settings.dayPeek="on";
 if(st.settings.profScale===undefined) st.settings.profScale="day";
 if(st.settings.day0===undefined) st.settings.day0=true;
 if(st.settings.exitDay===undefined) st.settings.exitDay=true;
+    if(st.settings.offWarn===undefined) st.settings.offWarn="off";
+    if(st.settings.offDist===undefined) st.settings.offDist=50;
+    if(st.settings.offFreq===undefined) st.settings.offFreq=30;
+    if(st.settings.offType===undefined) st.settings.offType="buzz";
 if(!st.actuals) st.actuals={}; if(!st.planned) st.planned={};
 for(const k in st.actuals){ if(typeof st.actuals[k]==="string") st.actuals[k]={v:st.actuals[k],m:"mi"}; }
 }
@@ -494,6 +531,7 @@ function doLocate(silent){
     const s=snapToTrail(pos.coords.latitude,pos.coords.longitude);
     state.lastFix={mile:Math.round(s.mile*10)/10,off:Math.round(s.off*10)/10,t:Date.now(),
       lat:Math.round(pos.coords.latitude*1e5)/1e5,lon:Math.round(pos.coords.longitude*1e5)/1e5};
+    checkOffTrail(s.off);
     persist(); renderAll();
   },err=>{
     gpsBusy=false;
@@ -501,6 +539,49 @@ function doLocate(silent){
   },{enableHighAccuracy:true,timeout:45000,maximumAge:60000});
 }
 function gpsMsg(t){for(const id of ["gpsStatus","gpsStatus2"]){const el=document.getElementById(id);if(el)el.textContent=t;}}
+let _offWarnT=0, _offActive=false;
+function clearOffTrailVisual(){
+  _offActive=false;
+  document.body.classList.remove("offtrail");
+  const ov=document.getElementById("dayOv"); if(ov) ov.classList.remove("offtrail");
+}
+function fireOffWarn(offMeters){
+  const st=state.settings;
+  const type=st.offType||"buzz";
+  const dist=Math.round(offMeters);
+  if(type==="buzz"){
+    // vibrate + short beep where supported
+    try{ if(navigator.vibrate) navigator.vibrate([180,90,180]); }catch(e){}
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(AC){ const ac=new AC(); const o=ac.createOscillator(), g=ac.createGain();
+        o.frequency.value=880; o.connect(g); g.connect(ac.destination); g.gain.value=0.12;
+        o.start(); setTimeout(()=>{o.stop(); ac.close&&ac.close();},350); }
+    }catch(e){}
+    gpsMsg("⚠ Off trail — "+dist+" m from the path");
+  } else if(type==="appRed"){
+    _offActive=true; document.body.classList.add("offtrail");
+    gpsMsg("⚠ Off trail — "+dist+" m from the path");
+  } else if(type==="peekRed"){
+    _offActive=true;
+    const ov=document.getElementById("dayOv"); if(ov) ov.classList.add("offtrail");
+    gpsMsg("⚠ Off trail — "+dist+" m from the path");
+  }
+}
+function checkOffTrail(offMiles){
+  const st=state.settings;
+  if(st.offWarn!=="on"||st.gps!=="on"||st.gpsMode!=="auto"){ clearOffTrailVisual(); return; }
+  const offM=offMiles*1609.34;               // miles -> meters
+  const thresh=Number(st.offDist)||50;
+  const freqMs=(Number(st.offFreq)||30)*1000;
+  if(offM>thresh){
+    const now=Date.now();
+    if(now-_offWarnT>=freqMs){ _offWarnT=now; fireOffWarn(offM); }
+    else if((st.offType==="appRed"||st.offType==="peekRed")&&!_offActive){ fireOffWarn(offM); }
+  } else {
+    clearOffTrailVisual();
+  }
+}
 function maybeAutoLocate(){
   const st=state.settings;
   if(st.gps!=="on"||st.gpsMode!=="auto")return;
@@ -1004,6 +1085,13 @@ function renderSetup(m){
   })();
   T("gpsOn",st.gps==="on");T("gpsOff",st.gps!=="on");
   T("gpsMan",st.gpsMode!=="auto");T("gpsAuto",st.gpsMode==="auto");
+  T("offOn",st.offWarn==="on");T("offOff",st.offWarn!=="on");
+  (function(){
+    const opts=document.getElementById("offOpts"); if(opts) opts.style.display=(st.offWarn==="on")?"block":"none";
+    const dist=document.getElementById("offDist"); if(dist&&document.activeElement!==dist) dist.value=st.offDist||50;
+    const freq=document.getElementById("offFreq"); if(freq&&document.activeElement!==freq) freq.value=st.offFreq||30;
+    document.querySelectorAll(".offTypeBtn").forEach(b=>b.classList.toggle("on",(st.offType||"buzz")===b.dataset.type));
+  })();
   T("logMi",st.logMode!=="pct");T("logPct",st.logMode==="pct");
   T("dpOn",st.dayPeek!=="off");T("dpOff",st.dayPeek==="off");
   T("scDay",(st.profScale||"day")==="day");T("scGain",st.profScale==="gain");T("scTrail",st.profScale==="trail");
@@ -1243,7 +1331,22 @@ function showDayOverlay(d,view){
   svg+='<text x="'+(W-padR)+'" y="'+(H-9)+'" fill="'+TX+'" font-size="12" font-weight="700" text-anchor="end">'+fmtMi(vd.pos)+'</text>';
   svg+='<text x="'+(W/2)+'" y="14" fill="'+TX+'" font-size="13" font-weight="800" text-anchor="middle">↑'+vd.gl.up.toLocaleString()+"  ↓"+vd.gl.down.toLocaleString()+'</text>';
   svgEl.innerHTML=svg;
+  // (b) live progress: on TODAY's card with GPS on+auto, show miles walked of the day
   st.textContent="";
+  try{
+    const st2=state.settings;
+    const isToday=(d===todayDayNum());
+    if(isToday && st2.gps==="on" && st2.gpsMode==="auto" && state.lastFix && typeof state.lastFix.mile==="number"){
+      const lo=Math.min(vd.pos0,vd.pos), hi=Math.max(vd.pos0,vd.pos);
+      const dayTotal=Math.abs(vd.pos-vd.pos0);
+      // miles walked today = how far past the day's start the live position is (clamped to the day)
+      const here=Math.max(lo,Math.min(hi,state.lastFix.mile));
+      const walked=Math.abs(here-vd.pos0);
+      const ageMin=Math.round((Date.now()-state.lastFix.t)/60000);
+      st.innerHTML='<b style="color:var(--teal,#4aa9ad)">📍 '+fmtMi(walked)+' of '+fmtMi(dayTotal)+' mi done today</b>'
+        +'<span style="opacity:.6"> · at mi '+fmtMi(state.lastFix.mile)+(ageMin>0?(" · "+ageMin+"m ago"):" · just now")+'</span>';
+    }
+  }catch(e){}
   ov.style.display="flex";
 }
 function hideDayOverlay(){const ov=document.getElementById("dayOv");if(ov)ov.style.display="none";}
@@ -1296,7 +1399,7 @@ async function ensureQR(){
 }
 async function shareApp(){
   try{
-    if(navigator.share){ await navigator.share({title:"Neurobomber’s Natcho JMT Planner",url:canonical()||location.href}); return; }
+    if(navigator.share){ await navigator.share({title:(TRAIL.shareName||("Natcho "+T_ABBR)),url:canonical()||location.href}); return; }
   }catch(e){}
   try{ await navigator.clipboard.writeText(canonical()||location.href); flashSave("link copied"); }catch(e){ flashSave("copy failed"); }
 }
@@ -1421,6 +1524,14 @@ on("gpsOn",()=>{state.settings.gps="on";persist();renderAll();});
 on("gpsOff",()=>{state.settings.gps="off";persist();renderAll();});
 on("gpsMan",()=>{state.settings.gpsMode="manual";persist();renderAll();});
 on("gpsAuto",()=>{state.settings.gpsMode="auto";persist();renderAll();});
+on("offOn",()=>{state.settings.offWarn="on";persist();renderAll();});
+on("offOff",()=>{state.settings.offWarn="off";clearOffTrailVisual();persist();renderAll();});
+(function(){
+  const dist=document.getElementById("offDist"), freq=document.getElementById("offFreq");
+  if(dist) dist.addEventListener("change",()=>{let v=Math.max(10,Math.min(500,Number(dist.value)||50));state.settings.offDist=v;dist.value=v;persist();});
+  if(freq) freq.addEventListener("change",()=>{let v=Math.max(10,Math.min(300,Number(freq.value)||30));state.settings.offFreq=v;freq.value=v;persist();});
+  document.querySelectorAll(".offTypeBtn").forEach(b=>b.addEventListener("click",()=>{state.settings.offType=b.dataset.type;persist();renderAll();}));
+})();
 on("locateBtn",()=>doLocate(false)); on("locateBtn2",()=>doLocate(false));
 on("logFixBtn",()=>{
   const td=tDayOf(); if(td<1||!state.lastFix)return;
