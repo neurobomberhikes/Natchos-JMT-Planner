@@ -84,6 +84,8 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
 .offwarn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .offwarn-row label{font-size:12px;color:var(--dim,#8fa596);margin:0 4px 0 0}
 .offwarn-row input[type=number]{width:72px}
+.offTypeBtn.on{background:var(--trail) !important;color:#fff !important;border-color:var(--trail) !important}
+.offTypeBtn.on::before{content:"✓ "}
 </style>
 </head>
 <body>
@@ -186,7 +188,7 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
           <input type="number" id="offFreq" min="10" max="300" step="5" value="30"> <span style="color:var(--dim,#8fa596);font-size:12px">seconds</span>
         </div>
         <div class="offwarn-row" style="margin-top:8px">
-          <label style="width:100%;margin-bottom:2px">Warning type</label>
+          <label style="width:100%;margin-bottom:2px">Warning types — pick any combination</label>
           <div class="seg3" style="display:flex;gap:6px;width:100%">
             <button class="reset offTypeBtn" id="offBuzz" data-type="buzz" style="flex:1;padding:8px 4px;margin:0">Buzz / beep</button>
             <button class="reset offTypeBtn" id="offApp" data-type="appRed" style="flex:1;padding:8px 4px;margin:0">App red</button>
@@ -310,7 +312,7 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
 <script>
 
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
-const APP_VERSION="5.0.2-jmt.1";
+const APP_VERSION="5.0.4-jmt.1";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
 const CANONICAL_PIN="https://neurobomberhikes.github.io/Natcho-JMT-Planner/"; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
@@ -390,7 +392,7 @@ function defaultState(){
   const t=new Date();
   const iso=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
   return {actuals:{},planned:{},pace:"",routeChanges:[],questSel:{},customQuests:[],
-    settings:{dir:"NOBO",start:0,end:T_END,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false,offWarn:"off",offDist:50,offFreq:30,offType:"buzz"}};
+    settings:{dir:"NOBO",start:0,end:T_END,date:iso,colors:true,logMode:"mi",gps:"off",gpsMode:"manual",legsOn:false,questsOn:false,offWarn:"off",offDist:50,offFreq:30,offBuzz:true,offAppRed:false,offPeekRed:false}};
 }
 function saveState(s){
   memStore=s;
@@ -419,7 +421,9 @@ if(st.settings.exitDay===undefined) st.settings.exitDay=true;
     if(st.settings.offWarn===undefined) st.settings.offWarn="off";
     if(st.settings.offDist===undefined) st.settings.offDist=50;
     if(st.settings.offFreq===undefined) st.settings.offFreq=30;
-    if(st.settings.offType===undefined) st.settings.offType="buzz";
+    if(st.settings.offBuzz===undefined) st.settings.offBuzz=(st.settings.offType?st.settings.offType==="buzz":true);
+    if(st.settings.offAppRed===undefined) st.settings.offAppRed=(st.settings.offType==="appRed");
+    if(st.settings.offPeekRed===undefined) st.settings.offPeekRed=(st.settings.offType==="peekRed");
 if(!st.actuals) st.actuals={}; if(!st.planned) st.planned={};
 for(const k in st.actuals){ if(typeof st.actuals[k]==="string") st.actuals[k]={v:st.actuals[k],m:"mi"}; }
 }
@@ -547,10 +551,8 @@ function clearOffTrailVisual(){
 }
 function fireOffWarn(offMeters){
   const st=state.settings;
-  const type=st.offType||"buzz";
   const dist=Math.round(offMeters);
-  if(type==="buzz"){
-    // vibrate + short beep where supported
+  if(st.offBuzz){
     try{ if(navigator.vibrate) navigator.vibrate([180,90,180]); }catch(e){}
     try{
       const AC=window.AudioContext||window.webkitAudioContext;
@@ -558,15 +560,10 @@ function fireOffWarn(offMeters){
         o.frequency.value=880; o.connect(g); g.connect(ac.destination); g.gain.value=0.12;
         o.start(); setTimeout(()=>{o.stop(); ac.close&&ac.close();},350); }
     }catch(e){}
-    gpsMsg("⚠ Off trail — "+dist+" m from the path");
-  } else if(type==="appRed"){
-    _offActive=true; document.body.classList.add("offtrail");
-    gpsMsg("⚠ Off trail — "+dist+" m from the path");
-  } else if(type==="peekRed"){
-    _offActive=true;
-    const ov=document.getElementById("dayOv"); if(ov) ov.classList.add("offtrail");
-    gpsMsg("⚠ Off trail — "+dist+" m from the path");
   }
+  if(st.offAppRed){ _offActive=true; document.body.classList.add("offtrail"); }
+  if(st.offPeekRed){ _offActive=true; const ov=document.getElementById("dayOv"); if(ov) ov.classList.add("offtrail"); }
+  gpsMsg("⚠ Off trail — "+dist+" m from the path");
 }
 function checkOffTrail(offMiles){
   const st=state.settings;
@@ -577,7 +574,7 @@ function checkOffTrail(offMiles){
   if(offM>thresh){
     const now=Date.now();
     if(now-_offWarnT>=freqMs){ _offWarnT=now; fireOffWarn(offM); }
-    else if((st.offType==="appRed"||st.offType==="peekRed")&&!_offActive){ fireOffWarn(offM); }
+    else if((st.offAppRed||st.offPeekRed)&&!_offActive){ fireOffWarn(offM); }
   } else {
     clearOffTrailVisual();
   }
@@ -1090,7 +1087,10 @@ function renderSetup(m){
     const opts=document.getElementById("offOpts"); if(opts) opts.style.display=(st.offWarn==="on")?"block":"none";
     const dist=document.getElementById("offDist"); if(dist&&document.activeElement!==dist) dist.value=st.offDist||50;
     const freq=document.getElementById("offFreq"); if(freq&&document.activeElement!==freq) freq.value=st.offFreq||30;
-    document.querySelectorAll(".offTypeBtn").forEach(b=>b.classList.toggle("on",(st.offType||"buzz")===b.dataset.type));
+    document.querySelectorAll(".offTypeBtn").forEach(b=>{
+      const k=b.dataset.type==="buzz"?"offBuzz":(b.dataset.type==="appRed"?"offAppRed":"offPeekRed");
+      b.classList.toggle("on",!!st[k]);
+    });
   })();
   T("logMi",st.logMode!=="pct");T("logPct",st.logMode==="pct");
   T("dpOn",st.dayPeek!=="off");T("dpOff",st.dayPeek==="off");
@@ -1530,7 +1530,13 @@ on("offOff",()=>{state.settings.offWarn="off";clearOffTrailVisual();persist();re
   const dist=document.getElementById("offDist"), freq=document.getElementById("offFreq");
   if(dist) dist.addEventListener("change",()=>{let v=Math.max(10,Math.min(500,Number(dist.value)||50));state.settings.offDist=v;dist.value=v;persist();});
   if(freq) freq.addEventListener("change",()=>{let v=Math.max(10,Math.min(300,Number(freq.value)||30));state.settings.offFreq=v;freq.value=v;persist();});
-  document.querySelectorAll(".offTypeBtn").forEach(b=>b.addEventListener("click",()=>{state.settings.offType=b.dataset.type;persist();renderAll();}));
+  document.querySelectorAll(".offTypeBtn").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.type==="buzz"?"offBuzz":(b.dataset.type==="appRed"?"offAppRed":"offPeekRed");
+    state.settings[k]=!state.settings[k];
+    if(!state.settings.offAppRed) document.body.classList.remove("offtrail");
+    if(!state.settings.offPeekRed){ const ov=document.getElementById("dayOv"); if(ov) ov.classList.remove("offtrail"); }
+    persist();renderAll();
+  }));
 })();
 on("locateBtn",()=>doLocate(false)); on("locateBtn2",()=>doLocate(false));
 on("logFixBtn",()=>{
