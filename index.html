@@ -194,6 +194,7 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
             <button class="reset offTypeBtn" id="offApp" data-type="appRed" style="flex:1;padding:8px 4px;margin:0">App red</button>
             <button class="reset offTypeBtn" id="offPeek" data-type="peekRed" style="flex:1;padding:8px 4px;margin:0">Profile red</button>
           </div>
+          <div class="sub" id="offActive" style="margin-top:6px"></div>
         </div>
       </div>
       <details style="margin:-2px 0 10px 102px">
@@ -312,7 +313,7 @@ body.offtrail .wrap,body.offtrail header{background:transparent}
 <script>
 
 // ============ Neurobomber's Natcho v2 — © 2026 Neurobomber. All rights reserved. ============
-const APP_VERSION="5.0.4-jmt.1";
+const APP_VERSION="5.0.5-jmt.1";
 const COFFEE_URL="https://buymeacoffee.com/Neurobomberhikes";
 const CANONICAL_PIN="https://neurobomberhikes.github.io/Natcho-JMT-Planner/"; // optional: set your permanent URL here when rebranding to pin share/QR/version-check
 function canonical(){
@@ -1083,7 +1084,7 @@ function renderSetup(m){
   T("gpsOn",st.gps==="on");T("gpsOff",st.gps!=="on");
   T("gpsMan",st.gpsMode!=="auto");T("gpsAuto",st.gpsMode==="auto");
   T("offOn",st.offWarn==="on");T("offOff",st.offWarn!=="on");
-  (function(){
+  try{
     const opts=document.getElementById("offOpts"); if(opts) opts.style.display=(st.offWarn==="on")?"block":"none";
     const dist=document.getElementById("offDist"); if(dist&&document.activeElement!==dist) dist.value=st.offDist||50;
     const freq=document.getElementById("offFreq"); if(freq&&document.activeElement!==freq) freq.value=st.offFreq||30;
@@ -1091,7 +1092,12 @@ function renderSetup(m){
       const k=b.dataset.type==="buzz"?"offBuzz":(b.dataset.type==="appRed"?"offAppRed":"offPeekRed");
       b.classList.toggle("on",!!st[k]);
     });
-  })();
+    const act=document.getElementById("offActive");
+    if(act){
+      const names=[]; if(st.offBuzz)names.push("Buzz/beep"); if(st.offAppRed)names.push("App red"); if(st.offPeekRed)names.push("Profile red");
+      act.textContent="Active: "+(names.length?names.join(" + "):"none — tap a type above");
+    }
+  }catch(e){}
   T("logMi",st.logMode!=="pct");T("logPct",st.logMode==="pct");
   T("dpOn",st.dayPeek!=="off");T("dpOff",st.dayPeek==="off");
   T("scDay",(st.profScale||"day")==="day");T("scGain",st.profScale==="gain");T("scTrail",st.profScale==="trail");
@@ -1530,13 +1536,24 @@ on("offOff",()=>{state.settings.offWarn="off";clearOffTrailVisual();persist();re
   const dist=document.getElementById("offDist"), freq=document.getElementById("offFreq");
   if(dist) dist.addEventListener("change",()=>{let v=Math.max(10,Math.min(500,Number(dist.value)||50));state.settings.offDist=v;dist.value=v;persist();});
   if(freq) freq.addEventListener("change",()=>{let v=Math.max(10,Math.min(300,Number(freq.value)||30));state.settings.offFreq=v;freq.value=v;persist();});
-  document.querySelectorAll(".offTypeBtn").forEach(b=>b.addEventListener("click",()=>{
-    const k=b.dataset.type==="buzz"?"offBuzz":(b.dataset.type==="appRed"?"offAppRed":"offPeekRed");
-    state.settings[k]=!state.settings[k];
-    if(!state.settings.offAppRed) document.body.classList.remove("offtrail");
-    if(!state.settings.offPeekRed){ const ov=document.getElementById("dayOv"); if(ov) ov.classList.remove("offtrail"); }
-    persist();renderAll();
-  }));
+  // delegated, loss-proof handler for warning-type buttons (+ ghost-tap guard)
+  let _lastOffTap=0;
+  window.offTypeTap=function(type){
+    try{
+      const now=Date.now(); if(now-_lastOffTap<300) return; _lastOffTap=now;
+      const k=type==="buzz"?"offBuzz":(type==="appRed"?"offAppRed":"offPeekRed");
+      state.settings[k]=!state.settings[k];
+      if(!state.settings.offAppRed) document.body.classList.remove("offtrail");
+      if(!state.settings.offPeekRed){ const ov=document.getElementById("dayOv"); if(ov) ov.classList.remove("offtrail"); }
+      persist();renderAll();
+    }catch(err){ try{gpsMsg("⚠ warning-toggle error: "+err.message);}catch(e){} }
+  };
+  if(document.addEventListener){
+    document.addEventListener("click",function(e){
+      let t=e.target;
+      while(t&&t!==document){ if(t.classList&&t.classList.contains&&t.classList.contains("offTypeBtn")){ offTypeTap(t.dataset.type); return; } t=t.parentNode; }
+    });
+  }
 })();
 on("locateBtn",()=>doLocate(false)); on("locateBtn2",()=>doLocate(false));
 on("logFixBtn",()=>{
